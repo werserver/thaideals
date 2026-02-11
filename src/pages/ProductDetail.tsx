@@ -162,9 +162,11 @@ export default function ProductDetail() {
           {/* Info */}
           <div className="space-y-5">
             <div>
-              <Badge variant="secondary" className="mb-2">
-                {product.category_name}
-              </Badge>
+              <Link to={`/category/${encodeURIComponent(product.category_name)}`}>
+                <Badge variant="secondary" className="mb-2 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
+                  {product.category_name}
+                </Badge>
+              </Link>
               <h1 className="text-xl font-bold leading-tight text-foreground sm:text-2xl">
                 {product.product_name}
               </h1>
