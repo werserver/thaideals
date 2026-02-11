@@ -1,8 +1,8 @@
 import { getProductRating, formatPrice, type Product } from "@/lib/api";
 import { StarRating } from "./StarRating";
+import { WishlistButton } from "./WishlistButton";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { getAdminSettings } from "@/lib/store";
 
 interface ProductCardProps {
   product: Product;
@@ -32,6 +32,9 @@ export function ProductCard({ product }: ProductCardProps) {
               -{product.product_discounted_percentage}%
             </Badge>
           )}
+          <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <WishlistButton product={product} />
+          </div>
         </div>
       </a>
 
