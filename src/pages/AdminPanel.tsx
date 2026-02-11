@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Header } from "@/components/Header";
 import { SEOHead } from "@/components/SEOHead";
 import { AdminLogin } from "@/components/AdminLogin";
-import { isAdminLoggedIn, logoutAdmin } from "@/lib/auth";
+import { isAdminLoggedIn, logoutAdmin, changePassword, changeUsername, getUsername } from "@/lib/auth";
 import { getAdminSettings, saveAdminSettings } from "@/lib/store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import {
   X, Plus, Save, Flame, Sparkles, DollarSign, ShoppingCart,
-  Clock, CheckCircle, XCircle, LogOut, Settings, BarChart3,
+  Clock, CheckCircle, XCircle, LogOut, Settings, BarChart3, KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchConversions, type Conversion } from "@/lib/api";
@@ -51,7 +51,7 @@ export default function AdminPanel() {
         </div>
 
         <Tabs defaultValue="settings">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="settings" className="gap-1.5">
               <Settings className="h-4 w-4" />
               ตั้งค่า
@@ -60,6 +60,10 @@ export default function AdminPanel() {
               <BarChart3 className="h-4 w-4" />
               Dashboard
             </TabsTrigger>
+            <TabsTrigger value="security" className="gap-1.5">
+              <KeyRound className="h-4 w-4" />
+              ความปลอดภัย
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="settings" className="mt-6">
@@ -67,6 +71,9 @@ export default function AdminPanel() {
           </TabsContent>
           <TabsContent value="dashboard" className="mt-6">
             <DashboardTab />
+          </TabsContent>
+          <TabsContent value="security" className="mt-6">
+            <SecurityTab />
           </TabsContent>
         </Tabs>
       </main>
@@ -364,6 +371,102 @@ function DashboardTab() {
           </Table>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ========== Security Tab ========== */
+function SecurityTab() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [newUsername, setNewUsername] = useState("");
+  const [usernamePassword, setUsernamePassword] = useState("");
+
+  const handleChangePassword = () => {
+    if (!currentPassword || !newPassword) return;
+    if (newPassword.length < 6) {
+      toast.error("รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("รหัสผ่านใหม่ไม่ตรงกัน");
+      return;
+    }
+    if (changePassword(currentPassword, newPassword)) {
+      toast.success("เปลี่ยนรหัสผ่านเรียบร้อย!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } else {
+      toast.error("รหัสผ่านปัจจุบันไม่ถูกต้อง");
+    }
+  };
+
+  const handleChangeUsername = () => {
+    if (!usernamePassword || !newUsername.trim()) return;
+    if (newUsername.trim().length < 3) {
+      toast.error("ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร");
+      return;
+    }
+    if (changeUsername(usernamePassword, newUsername.trim())) {
+      toast.success("เปลี่ยนชื่อผู้ใช้เรียบร้อย!");
+      setNewUsername("");
+      setUsernamePassword("");
+    } else {
+      toast.error("รหัสผ่านไม่ถูกต้อง");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <KeyRound className="h-5 w-5" />
+            เปลี่ยนรหัสผ่าน
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>รหัสผ่านปัจจุบัน</Label>
+            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="กรอกรหัสผ่านปัจจุบัน" />
+          </div>
+          <div className="space-y-2">
+            <Label>รหัสผ่านใหม่</Label>
+            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="กรอกรหัสผ่านใหม่ (อย่างน้อย 6 ตัว)" />
+          </div>
+          <div className="space-y-2">
+            <Label>ยืนยันรหัสผ่านใหม่</Label>
+            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" />
+          </div>
+          <Button onClick={handleChangePassword} className="gap-2">
+            <Save className="h-4 w-4" />
+            บันทึกรหัสผ่านใหม่
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">เปลี่ยนชื่อผู้ใช้</CardTitle>
+          <p className="text-sm text-muted-foreground">ชื่อผู้ใช้ปัจจุบัน: <strong>{getUsername()}</strong></p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>ชื่อผู้ใช้ใหม่</Label>
+            <Input value={newUsername} onChange={(e) => setNewUsername(e.target.value)} placeholder="กรอกชื่อผู้ใช้ใหม่" />
+          </div>
+          <div className="space-y-2">
+            <Label>ยืนยันรหัสผ่าน</Label>
+            <Input type="password" value={usernamePassword} onChange={(e) => setUsernamePassword(e.target.value)} placeholder="กรอกรหัสผ่านเพื่อยืนยัน" />
+          </div>
+          <Button onClick={handleChangeUsername} className="gap-2">
+            <Save className="h-4 w-4" />
+            บันทึกชื่อผู้ใช้ใหม่
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
