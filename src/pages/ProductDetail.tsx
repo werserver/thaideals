@@ -3,6 +3,7 @@ import { useParams, Link, useLocation } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { SEOHead } from "@/components/SEOHead";
 import { StarRating } from "@/components/StarRating";
+import { ShareButtons } from "@/components/ShareButtons";
 import { FlashSaleCountdown } from "@/components/FlashSaleCountdown";
 import { AiReviews } from "@/components/AiReviews";
 import { AiDescription } from "@/components/AiDescription";
@@ -22,9 +23,11 @@ import {
 } from "@/lib/api";
 import { getAdminSettings } from "@/lib/store";
 import { addRecentlyViewed } from "@/lib/wishlist";
+import { extractIdFromSlug } from "@/lib/slug";
 
 export default function ProductDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
+  const id = slug ? extractIdFromSlug(slug) : undefined;
   const location = useLocation();
   const [product, setProduct] = useState<Product | null>(
     (location.state as any)?.product || null
@@ -229,6 +232,9 @@ export default function ProductDetail() {
                 ซื้อสินค้านี้
               </Button>
             </a>
+
+            {/* Share Buttons */}
+            <ShareButtons url={window.location.href} title={product.product_name} />
           </div>
         </div>
 
