@@ -5,6 +5,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { StarRating } from "@/components/StarRating";
 import { FlashSaleCountdown } from "@/components/FlashSaleCountdown";
 import { AiReviews } from "@/components/AiReviews";
+import { AiDescription } from "@/components/AiDescription";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -223,6 +224,17 @@ export default function ProductDetail() {
               </Button>
             </a>
           </div>
+        </div>
+
+        {/* Product Description */}
+        <div className="rounded-xl border bg-card p-6 space-y-4 animate-fade-in">
+          <h2 className="text-lg font-bold">คำอธิบายสินค้า</h2>
+          <AiDescription
+            productName={product.product_name}
+            categoryName={product.category_name}
+            price={currentPrice}
+            currency={product.product_currency}
+          />
         </div>
 
         {/* Product Details Section */}
