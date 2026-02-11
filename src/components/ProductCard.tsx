@@ -2,6 +2,7 @@ import { getProductRating, formatPrice, type Product } from "@/lib/api";
 import { StarRating } from "./StarRating";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { getAdminSettings } from "@/lib/store";
 
 interface ProductCardProps {
   product: Product;
@@ -12,7 +13,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const hasDiscount = product.product_discounted_percentage > 0;
 
   return (
-    <div className="group overflow-hidden rounded-xl border bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+    <div className="group overflow-hidden rounded-xl border bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 animate-fade-in">
       <a
         href={product.tracking_link}
         target="_blank"
@@ -70,6 +71,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </p>
           <Link
             to={`/product/${product.product_id}`}
+            state={{ product }}
             className="text-xs text-primary font-medium hover:underline shrink-0 ml-2"
             onClick={(e) => e.stopPropagation()}
           >

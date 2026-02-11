@@ -3,6 +3,8 @@
 export interface AdminSettings {
   categories: string[];
   keywords: string[];
+  enableFlashSale: boolean;
+  enableAiReviews: boolean;
 }
 
 const STORAGE_KEY = "aff-shop-admin";
@@ -10,6 +12,8 @@ const STORAGE_KEY = "aff-shop-admin";
 const defaultSettings: AdminSettings = {
   categories: ["Electronics", "Fashion", "Home & Living", "Health & Beauty", "Sports & Outdoors"],
   keywords: ["โปรโมชั่น", "ลดราคา", "สินค้ายอดนิยม", "ของใช้ในบ้าน", "แฟชั่น"],
+  enableFlashSale: true,
+  enableAiReviews: true,
 };
 
 export function getAdminSettings(): AdminSettings {
