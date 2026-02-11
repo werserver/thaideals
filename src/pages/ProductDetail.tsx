@@ -223,6 +223,41 @@ export default function ProductDetail() {
           </div>
         </div>
 
+        {/* Product Details Section */}
+        <div className="rounded-xl border bg-card p-6 space-y-4 animate-fade-in">
+          <h2 className="text-lg font-bold">รายละเอียดสินค้า</h2>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            {[
+              { label: "ชื่อสินค้า", value: product.product_name },
+              { label: "หมวดหมู่", value: product.category_name },
+              { label: "ร้านค้า", value: product.advertiser_id },
+              { label: "Shop ID", value: product.shop_id },
+              { label: "สกุลเงิน", value: product.product_currency },
+              { label: "ราคาปกติ", value: formatPrice(product.product_price, product.product_currency) },
+              ...(hasDiscount
+                ? [
+                    { label: "ราคาลด", value: formatPrice(product.product_discounted, product.product_currency) },
+                    { label: "ส่วนลด", value: `${product.product_discounted_percentage}%` },
+                  ]
+                : []),
+              { label: "Product ID", value: product.product_id },
+            ].map((item) => (
+              <div key={item.label} className="space-y-0.5">
+                <p className="text-muted-foreground text-xs">{item.label}</p>
+                <p className="font-medium text-card-foreground break-all">{item.value}</p>
+              </div>
+            ))}
+          </div>
+          <a
+            href={product.product_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block text-xs text-primary hover:underline"
+          >
+            ดูสินค้าบนร้านค้าต้นทาง →
+          </a>
+        </div>
+
         {/* Reviews Section */}
         <div className="space-y-6">
           <div className="space-y-4">
