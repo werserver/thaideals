@@ -6,6 +6,8 @@ interface SEOHeadProps {
   image?: string;
   url?: string;
   type?: string;
+  canonical?: string;
+  breadcrumbs?: { name: string; url: string }[];
   product?: {
     name: string;
     price: number;
@@ -23,49 +25,78 @@ export function SEOHead({
   image,
   url,
   type = "website",
+  canonical,
+  breadcrumbs,
   product,
 }: SEOHeadProps) {
   const fullTitle = title.includes("ThaiDeals") ? title : `${title} | ThaiDeals`;
+  const pageUrl = url || (typeof window !== "undefined" ? window.location.href : "");
+  const canonicalUrl = canonical || pageUrl;
 
-  const jsonLd = product
-    ? {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        name: product.name,
-        image: product.image,
-        offers: {
-          "@type": "Offer",
-          price: product.price,
-          priceCurrency: product.currency,
-          availability: product.availability || "https://schema.org/InStock",
-        },
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: product.rating,
-          reviewCount: product.reviewCount,
-          bestRating: 5,
-          worstRating: 1,
-        },
-      }
-    : {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        name: "ThaiDeals",
-        description,
-        url: url || window.location.href,
-      };
+  const jsonLdItems: object[] = [];
+
+  if (product) {
+    jsonLdItems.push({
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.name,
+      image: product.image,
+      description: description.slice(0, 160),
+      offers: {
+        "@type": "Offer",
+        price: product.price,
+        priceCurrency: product.currency,
+        availability: product.availability || "https://schema.org/InStock",
+        url: pageUrl,
+      },
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: product.rating,
+        reviewCount: product.reviewCount,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    });
+  } else {
+    jsonLdItems.push({
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "ThaiDeals",
+      description,
+      url: pageUrl,
+      potentialAction: {
+        "@type": "SearchAction",
+        target: `${typeof window !== "undefined" ? window.location.origin : ""}/search?q={search_term_string}`,
+        "query-input": "required name=search_term_string",
+      },
+    });
+  }
+
+  if (breadcrumbs?.length) {
+    jsonLdItems.push({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: breadcrumbs.map((b, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: b.name,
+        item: b.url,
+      })),
+    });
+  }
 
   return (
     <Helmet>
       <title>{fullTitle}</title>
       <meta name="description" content={description.slice(0, 160)} />
+      <link rel="canonical" href={canonicalUrl} />
 
       {/* Open Graph */}
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description.slice(0, 160)} />
       <meta property="og:type" content={type} />
       {image && <meta property="og:image" content={image} />}
-      {url && <meta property="og:url" content={url} />}
+      <meta property="og:url" content={pageUrl} />
       <meta property="og:site_name" content="ThaiDeals" />
       <meta property="og:locale" content="th_TH" />
 
@@ -76,7 +107,9 @@ export function SEOHead({
       {image && <meta name="twitter:image" content={image} />}
 
       {/* JSON-LD */}
-      <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      {jsonLdItems.map((item, i) => (
+        <script key={i} type="application/ld+json">{JSON.stringify(item)}</script>
+      ))}
     </Helmet>
   );
 }
