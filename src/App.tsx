@@ -4,34 +4,39 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import ProductDetail from "./pages/ProductDetail";
 import CategoryPage from "./pages/CategoryPage";
 import Dashboard from "./pages/Dashboard";
+import WishlistPage from "./pages/WishlistPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/category/:name" element={<CategoryPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </HelmetProvider>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/category/:name" element={<CategoryPage />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/wishlist" element={<WishlistPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
+  </ThemeProvider>
 );
 
 export default App;

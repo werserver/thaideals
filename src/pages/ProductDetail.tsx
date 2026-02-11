@@ -21,6 +21,7 @@ import {
   type Product,
 } from "@/lib/api";
 import { getAdminSettings } from "@/lib/store";
+import { addRecentlyViewed } from "@/lib/wishlist";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -87,6 +88,9 @@ export default function ProductDetail() {
       </div>
     );
   }
+
+  // Track recently viewed
+  addRecentlyViewed(product);
 
   const { rating, reviewCount } = getProductRating(product.product_id);
   const reviews = getProductReviews(product.product_id);

@@ -8,6 +8,9 @@ import { ProductGrid } from "@/components/ProductGrid";
 import { FilterBar, type SortOption } from "@/components/FilterBar";
 import { PaginationBar } from "@/components/PaginationBar";
 import { CompareTable } from "@/components/CompareTable";
+import { PriceAlertBanner } from "@/components/PriceAlertBanner";
+import { RecentlyViewed } from "@/components/RecentlyViewed";
+import { FakePurchasePopup } from "@/components/FakePurchasePopup";
 import { useProducts } from "@/hooks/useProducts";
 import { getAdminSettings } from "@/lib/store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -72,10 +75,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PriceAlertBanner />
       <SEOHead />
       <Header />
 
       <main className="container mx-auto px-4 py-6 space-y-5">
+        {/* Recently Viewed */}
+        <RecentlyViewed />
         {/* Hero section */}
         <div className="rounded-2xl bg-gradient-to-r from-primary to-accent px-6 py-8 text-center animate-fade-in relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent_60%)]" />
@@ -158,6 +164,9 @@ const Index = () => {
       <footer className="border-t py-6 text-center text-sm text-muted-foreground">
         © 2026 ThaiDeals — สินค้าดีลพิเศษ
       </footer>
+
+      {/* Fake Purchase Popup */}
+      <FakePurchasePopup products={filteredProducts} />
     </div>
   );
 };

@@ -1,5 +1,6 @@
-import { ShoppingBag, Settings, BarChart3 } from "lucide-react";
+import { ShoppingBag, Settings, BarChart3, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function Header() {
   return (
@@ -10,6 +11,13 @@ export function Header() {
           <span className="text-xl font-bold tracking-tight">ThaiDeals</span>
         </Link>
         <nav className="flex items-center gap-1">
+          <Link
+            to="/wishlist"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-primary-foreground/80 transition-colors hover:text-primary-foreground hover:bg-primary-foreground/10"
+          >
+            <Heart className="h-4 w-4" />
+            <span className="hidden sm:inline">โปรด</span>
+          </Link>
           <Link
             to="/dashboard"
             className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-primary-foreground/80 transition-colors hover:text-primary-foreground hover:bg-primary-foreground/10"
@@ -24,6 +32,7 @@ export function Header() {
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">Admin</span>
           </Link>
+          <ThemeToggle />
         </nav>
       </div>
     </header>
