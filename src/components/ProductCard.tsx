@@ -3,6 +3,7 @@ import { StarRating } from "./StarRating";
 import { WishlistButton } from "./WishlistButton";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { productPath } from "@/lib/slug";
 
 interface ProductCardProps {
   product: Product;
@@ -73,7 +74,7 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.category_name}
           </p>
           <Link
-            to={`/product/${product.product_id}`}
+            to={productPath(product.product_id, product.product_name)}
             state={{ product }}
             className="text-xs text-primary font-medium hover:underline shrink-0 ml-2"
             onClick={(e) => e.stopPropagation()}
