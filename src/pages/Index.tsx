@@ -75,14 +75,15 @@ const Index = () => {
 
       <main className="container mx-auto px-4 py-6 space-y-5">
         {/* Hero section */}
-        <div className="rounded-2xl bg-gradient-to-r from-primary to-accent px-6 py-8 text-center">
-          <h1 className="text-2xl font-bold text-primary-foreground sm:text-3xl">
+        <div className="rounded-2xl bg-gradient-to-r from-primary to-accent px-6 py-8 text-center animate-fade-in relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent_60%)]" />
+          <h1 className="text-2xl font-bold text-primary-foreground sm:text-3xl relative">
             🛒 สินค้าดีลพิเศษ
           </h1>
-          <p className="mt-2 text-sm text-primary-foreground/80">
+          <p className="mt-2 text-sm text-primary-foreground/80 relative">
             รวมสินค้าลดราคา โปรโมชั่นสุดคุ้ม จากร้านค้าชั้นนำ
           </p>
-          <div className="mt-5 flex justify-center">
+          <div className="mt-5 flex justify-center relative">
             <SearchBar onSearch={handleSearch} initialValue={keyword} />
           </div>
         </div>

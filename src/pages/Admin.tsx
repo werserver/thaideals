@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { getAdminSettings, saveAdminSettings } from "@/lib/store";
 import { Header } from "@/components/Header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Save } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { X, Plus, Save, Flame, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Admin() {
@@ -100,6 +102,56 @@ export default function Admin() {
               <Button size="sm" onClick={addKeyword}>
                 <Plus className="h-4 w-4" />
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Feature toggles */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">ออฟชั่นเสริม</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-destructive/10 p-2">
+                  <Flame className="h-5 w-5 text-destructive" />
+                </div>
+                <div>
+                  <Label htmlFor="flash-sale" className="font-medium cursor-pointer">
+                    Flash Sale Countdown
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    แสดงเวลานับถอยหลังเร่งการซื้อในหน้าสินค้า
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="flash-sale"
+                checked={settings.enableFlashSale}
+                onCheckedChange={(v) => setSettings((s) => ({ ...s, enableFlashSale: v }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-primary/10 p-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <Label htmlFor="ai-reviews" className="font-medium cursor-pointer">
+                    AI Reviews (Gemini Flash)
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    ใช้ AI สร้างรีวิวสินค้าอัตโนมัติในหน้าสินค้า
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="ai-reviews"
+                checked={settings.enableAiReviews}
+                onCheckedChange={(v) => setSettings((s) => ({ ...s, enableAiReviews: v }))}
+              />
             </div>
           </CardContent>
         </Card>

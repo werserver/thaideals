@@ -1,42 +1,60 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { SEOHead } from "@/components/SEOHead";
 import { StarRating } from "@/components/StarRating";
+import { FlashSaleCountdown } from "@/components/FlashSaleCountdown";
+import { AiReviews } from "@/components/AiReviews";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star, ArrowLeft, ExternalLink } from "lucide-react";
+import { Star, ArrowLeft, ExternalLink, ShoppingCart, Shield, Truck } from "lucide-react";
 import {
   fetchProducts,
+  getCachedProduct,
   getProductRating,
   getProductReviews,
   formatPrice,
   type Product,
 } from "@/lib/api";
+import { getAdminSettings } from "@/lib/store";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const [product, setProduct] = useState<Product | null>(
+    (location.state as any)?.product || null
+  );
+  const [loading, setLoading] = useState(!product);
+  const settings = getAdminSettings();
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || product) return;
+
+    // Try cache first
+    const cached = getCachedProduct(id);
+    if (cached) {
+      setProduct(cached);
+      setLoading(false);
+      return;
+    }
+
+    // Fetch from API
     setLoading(true);
-    fetchProducts({ keyword: id, limit: 100, page: 1 })
+    fetchProducts({ limit: 100, page: 1 })
       .then((res) => {
         const found = res.data.find((p) => p.product_id === id);
         setProduct(found || null);
       })
       .catch(() => setProduct(null))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, product]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="container mx-auto max-w-4xl px-4 py-8">
+        <main className="container mx-auto max-w-5xl px-4 py-8">
           <Skeleton className="h-8 w-32 mb-6" />
           <div className="grid gap-8 md:grid-cols-2">
             <Skeleton className="aspect-square rounded-xl" />
@@ -107,14 +125,15 @@ export default function ProductDetail() {
           กลับหน้าแรก
         </Link>
 
-        <div className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-8 md:grid-cols-2 animate-fade-in">
+          {/* Images */}
           <div className="space-y-3">
             <a href={product.tracking_link} target="_blank" rel="noopener noreferrer">
-              <div className="overflow-hidden rounded-xl border bg-muted aspect-square">
+              <div className="overflow-hidden rounded-xl border bg-muted aspect-square group">
                 <img
                   src={images[0]}
                   alt={product.product_name}
-                  className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
+                  className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
             </a>
@@ -126,12 +145,12 @@ export default function ProductDetail() {
                     href={product.tracking_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="overflow-hidden rounded-lg border bg-muted aspect-square"
+                    className="overflow-hidden rounded-lg border bg-muted aspect-square group"
                   >
                     <img
                       src={img}
                       alt={`${product.product_name} ${idx + 2}`}
-                      className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
+                      className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300"
                       loading="lazy"
                     />
                   </a>
@@ -140,6 +159,7 @@ export default function ProductDetail() {
             )}
           </div>
 
+          {/* Info */}
           <div className="space-y-5">
             <div>
               <Badge variant="secondary" className="mb-2">
@@ -170,9 +190,23 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            <div className="text-sm text-muted-foreground space-y-1">
-              <p>ร้านค้า: {product.advertiser_id}</p>
-              <p>Shop ID: {product.shop_id}</p>
+            {/* Flash Sale Countdown */}
+            {settings.enableFlashSale && hasDiscount && (
+              <FlashSaleCountdown productId={product.product_id} />
+            )}
+
+            {/* Trust badges */}
+            <div className="flex flex-wrap gap-3">
+              {[
+                { icon: Shield, text: "สินค้าแท้ 100%" },
+                { icon: Truck, text: "จัดส่งฟรี" },
+                { icon: ShoppingCart, text: "สั่งซื้อง่าย" },
+              ].map(({ icon: Icon, text }) => (
+                <div key={text} className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary rounded-full px-3 py-1.5">
+                  <Icon className="h-3.5 w-3.5" />
+                  {text}
+                </div>
+              ))}
             </div>
 
             <a
@@ -181,7 +215,7 @@ export default function ProductDetail() {
               rel="noopener noreferrer"
               className="block"
             >
-              <Button size="lg" className="w-full gap-2 text-base">
+              <Button size="lg" className="w-full gap-2 text-base hover-scale">
                 <ExternalLink className="h-5 w-5" />
                 ซื้อสินค้านี้
               </Button>
@@ -189,36 +223,49 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold">
-            รีวิวจากผู้ซื้อ ({reviews.length})
-          </h2>
-          <div className="space-y-3">
-            {reviews.map((review) => (
-              <div
-                key={review.id}
-                className="rounded-xl border bg-card p-4 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">{review.name}</span>
-                  <span className="text-xs text-muted-foreground">{review.date}</span>
+        {/* Reviews Section */}
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold">
+              รีวิวจากผู้ซื้อ ({reviews.length})
+            </h2>
+            <div className="space-y-3">
+              {reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="rounded-xl border bg-card p-4 space-y-2 animate-fade-in"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">{review.name}</span>
+                    <span className="text-xs text-muted-foreground">{review.date}</span>
+                  </div>
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i <= review.rating
+                            ? "fill-star text-star"
+                            : "fill-muted text-muted"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-sm text-card-foreground">{review.comment}</p>
                 </div>
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${
-                        i <= review.rating
-                          ? "fill-star text-star"
-                          : "fill-muted text-muted"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <p className="text-sm text-card-foreground">{review.comment}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+
+          {/* AI Reviews */}
+          {settings.enableAiReviews && (
+            <AiReviews
+              productName={product.product_name}
+              categoryName={product.category_name}
+              price={currentPrice}
+              currency={product.product_currency}
+            />
+          )}
         </div>
       </main>
 

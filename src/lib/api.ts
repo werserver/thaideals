@@ -32,6 +32,13 @@ export interface FetchProductsParams {
   page?: number;
 }
 
+// Simple in-memory product cache
+const productCache = new Map<string, Product>();
+
+export function getCachedProduct(id: string): Product | undefined {
+  return productCache.get(id);
+}
+
 export async function fetchProducts(params: FetchProductsParams): Promise<ProductsResponse> {
   const searchParams = new URLSearchParams({
     token: API_TOKEN,
@@ -44,7 +51,12 @@ export async function fetchProducts(params: FetchProductsParams): Promise<Produc
 
   const res = await fetch(`${PRODUCTS_URL}?${searchParams.toString()}`);
   if (!res.ok) throw new Error("Failed to fetch products");
-  return res.json();
+  const result: ProductsResponse = await res.json();
+  
+  // Cache all fetched products
+  result.data.forEach((p) => productCache.set(p.product_id, p));
+  
+  return result;
 }
 
 // Conversions API
