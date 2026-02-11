@@ -1,13 +1,15 @@
 import { useState, useMemo } from "react";
 import { Header } from "@/components/Header";
+import { SEOHead } from "@/components/SEOHead";
 import { SearchBar } from "@/components/SearchBar";
 import { KeywordTags } from "@/components/KeywordTags";
 import { ProductGrid } from "@/components/ProductGrid";
 import { FilterBar, type SortOption } from "@/components/FilterBar";
 import { PaginationBar } from "@/components/PaginationBar";
+import { CompareTable } from "@/components/CompareTable";
 import { useProducts } from "@/hooks/useProducts";
 import { getAdminSettings } from "@/lib/store";
-import type { Product } from "@/lib/api";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   const settings = getAdminSettings();
@@ -38,12 +40,10 @@ const Index = () => {
     setPriceMax(max);
   };
 
-  // Client-side filter & sort
   const filteredProducts = useMemo(() => {
     if (!data?.data) return [];
     let items = [...data.data];
 
-    // Price filter
     if (priceMin !== undefined) {
       items = items.filter((p) => {
         const price = p.product_discounted || p.product_price;
@@ -57,7 +57,6 @@ const Index = () => {
       });
     }
 
-    // Sort
     if (sort === "price-asc") {
       items.sort((a, b) => (a.product_discounted || a.product_price) - (b.product_discounted || b.product_price));
     } else if (sort === "price-desc") {
@@ -71,6 +70,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead />
       <Header />
 
       <main className="container mx-auto px-4 py-6 space-y-5">
@@ -87,32 +87,45 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Keyword tags */}
         <KeywordTags
           keywords={settings.keywords}
           onSelect={handleTagSelect}
           active={activeTag}
         />
 
-        {/* Filter bar */}
         <FilterBar onPriceRange={handlePriceRange} onSort={setSort} sort={sort} />
 
-        {/* Products */}
-        <div>
+        {/* Tabs: Grid vs Compare */}
+        <Tabs defaultValue="grid">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">
               {activeKeyword ? `ผลการค้นหา "${activeKeyword}"` : "สินค้าแนะนำ"}
             </h2>
-            {data && (
-              <span className="text-sm text-muted-foreground">
-                {filteredProducts.length} รายการ
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {data && (
+                <span className="text-sm text-muted-foreground">
+                  {filteredProducts.length} รายการ
+                </span>
+              )}
+              <TabsList className="h-9">
+                <TabsTrigger value="grid" className="text-xs">แสดงสินค้า</TabsTrigger>
+                <TabsTrigger value="compare" className="text-xs">เปรียบเทียบ</TabsTrigger>
+              </TabsList>
+            </div>
           </div>
-          <ProductGrid products={filteredProducts} isLoading={isLoading} />
-        </div>
 
-        {/* Pagination */}
+          <TabsContent value="grid">
+            <ProductGrid products={filteredProducts} isLoading={isLoading} />
+          </TabsContent>
+          <TabsContent value="compare">
+            {filteredProducts.length > 0 ? (
+              <CompareTable products={filteredProducts} />
+            ) : (
+              <p className="text-center py-10 text-muted-foreground">ไม่มีสินค้าให้เปรียบเทียบ</p>
+            )}
+          </TabsContent>
+        </Tabs>
+
         {data && (
           <PaginationBar
             currentPage={page}

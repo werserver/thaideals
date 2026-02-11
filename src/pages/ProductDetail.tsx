@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
+import { SEOHead } from "@/components/SEOHead";
 import { StarRating } from "@/components/StarRating";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,6 @@ export default function ProductDetail() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    // Search product by keyword (product_id) — API doesn't support direct ID lookup
     fetchProducts({ keyword: id, limit: 100, page: 1 })
       .then((res) => {
         const found = res.data.find((p) => p.product_id === id);
@@ -55,6 +55,7 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <div className="min-h-screen bg-background">
+        <SEOHead title="ไม่พบสินค้า" description="ไม่พบสินค้าที่คุณกำลังค้นหา" />
         <Header />
         <main className="container mx-auto max-w-4xl px-4 py-20 text-center">
           <p className="text-xl font-medium text-muted-foreground">ไม่พบสินค้า</p>
@@ -69,6 +70,7 @@ export default function ProductDetail() {
   const { rating, reviewCount } = getProductRating(product.product_id);
   const reviews = getProductReviews(product.product_id);
   const hasDiscount = product.product_discounted_percentage > 0;
+  const currentPrice = hasDiscount ? product.product_discounted : product.product_price;
 
   const images = [product.product_picture];
   if (product.product_other_pictures) {
@@ -80,9 +82,23 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={product.product_name}
+        description={`${product.product_name} — ${formatPrice(currentPrice, product.product_currency)} | ${product.category_name}`}
+        image={product.product_picture}
+        type="product"
+        url={window.location.href}
+        product={{
+          name: product.product_name,
+          price: currentPrice,
+          currency: product.product_currency,
+          image: product.product_picture,
+          rating,
+          reviewCount,
+        }}
+      />
       <Header />
       <main className="container mx-auto max-w-5xl px-4 py-6 space-y-8">
-        {/* Back */}
         <Link
           to="/"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -91,9 +107,7 @@ export default function ProductDetail() {
           กลับหน้าแรก
         </Link>
 
-        {/* Product main */}
         <div className="grid gap-8 md:grid-cols-2">
-          {/* Images */}
           <div className="space-y-3">
             <a href={product.tracking_link} target="_blank" rel="noopener noreferrer">
               <div className="overflow-hidden rounded-xl border bg-muted aspect-square">
@@ -126,7 +140,6 @@ export default function ProductDetail() {
             )}
           </div>
 
-          {/* Info */}
           <div className="space-y-5">
             <div>
               <Badge variant="secondary" className="mb-2">
@@ -142,10 +155,7 @@ export default function ProductDetail() {
             <div className="space-y-1">
               <div className="flex items-baseline gap-3">
                 <span className="text-3xl font-bold text-primary">
-                  {formatPrice(
-                    hasDiscount ? product.product_discounted : product.product_price,
-                    product.product_currency
-                  )}
+                  {formatPrice(currentPrice, product.product_currency)}
                 </span>
                 {hasDiscount && (
                   <>
@@ -179,7 +189,6 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* Reviews */}
         <div className="space-y-4">
           <h2 className="text-lg font-bold">
             รีวิวจากผู้ซื้อ ({reviews.length})

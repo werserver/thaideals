@@ -1,4 +1,4 @@
-import { ShoppingBag, Settings } from "lucide-react";
+import { ShoppingBag, Settings, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function Header() {
@@ -9,13 +9,22 @@ export function Header() {
           <ShoppingBag className="h-7 w-7" />
           <span className="text-xl font-bold tracking-tight">ThaiDeals</span>
         </Link>
-        <Link
-          to="/admin"
-          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-primary-foreground/80 transition-colors hover:text-primary-foreground hover:bg-primary-foreground/10"
-        >
-          <Settings className="h-4 w-4" />
-          <span className="hidden sm:inline">Admin</span>
-        </Link>
+        <nav className="flex items-center gap-1">
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-primary-foreground/80 transition-colors hover:text-primary-foreground hover:bg-primary-foreground/10"
+          >
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Link>
+          <Link
+            to="/admin"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-primary-foreground/80 transition-colors hover:text-primary-foreground hover:bg-primary-foreground/10"
+          >
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Admin</span>
+          </Link>
+        </nav>
       </div>
     </header>
   );
