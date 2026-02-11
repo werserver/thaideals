@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { SEOHead } from "@/components/SEOHead";
 import { SearchBar } from "@/components/SearchBar";
@@ -10,6 +11,7 @@ import { CompareTable } from "@/components/CompareTable";
 import { useProducts } from "@/hooks/useProducts";
 import { getAdminSettings } from "@/lib/store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 const Index = () => {
   const settings = getAdminSettings();
@@ -93,6 +95,22 @@ const Index = () => {
           onSelect={handleTagSelect}
           active={activeTag}
         />
+
+        {/* Categories */}
+        {settings.categories.length > 0 && (
+          <div className="space-y-2">
+            <h2 className="text-sm font-semibold text-muted-foreground">หมวดหมู่</h2>
+            <div className="flex flex-wrap gap-2">
+              {settings.categories.map((cat) => (
+                <Link key={cat} to={`/category/${encodeURIComponent(cat)}`}>
+                  <Badge variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
+                    {cat}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <FilterBar onPriceRange={handlePriceRange} onSort={setSort} sort={sort} />
 
