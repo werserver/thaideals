@@ -1,5 +1,7 @@
 const API_TOKEN = "QlpXZyCqMylKUjZiYchwB";
+const API_TOKEN_PRIVATE = "jdNzOribbbAgmMmpXwvUC";
 const PRODUCTS_URL = "https://ga.passio.eco/api/v3/products";
+const CONVERSIONS_URL = "https://api.ecotrackings.com/api/v3/conversions";
 
 export interface Product {
   product_id: string;
@@ -42,6 +44,62 @@ export async function fetchProducts(params: FetchProductsParams): Promise<Produc
 
   const res = await fetch(`${PRODUCTS_URL}?${searchParams.toString()}`);
   if (!res.ok) throw new Error("Failed to fetch products");
+  return res.json();
+}
+
+// Conversions API
+export interface ConversionItem {
+  id: string;
+  sku: string;
+  payout: number;
+  payout_bonus: number;
+  sale_amount: number;
+  status: string;
+  time: string;
+  currency: string;
+  product_name: string;
+  category_name: string;
+}
+
+export interface Conversion {
+  _id: string;
+  advertiser: string;
+  adv_order_id: string;
+  time: string;
+  payout_approved: number;
+  payout_pending: number;
+  payout_rejected: number;
+  sale_amount: number;
+  item_count: number;
+  status: string;
+  buyer_country: string;
+  item_list: ConversionItem[];
+}
+
+export interface ConversionsResponse {
+  meta: { total: number; skip: number; limit: number };
+  data: Conversion[];
+}
+
+export async function fetchConversions(params: {
+  start_date?: string;
+  end_date?: string;
+  status?: string;
+  limit?: number;
+  page?: number;
+}): Promise<ConversionsResponse> {
+  const searchParams = new URLSearchParams({
+    token_private: API_TOKEN_PRIVATE,
+    limit: String(params.limit ?? 50),
+    page: String(params.page ?? 1),
+  });
+
+  if (params.start_date) searchParams.set("start_date", params.start_date);
+  if (params.end_date) searchParams.set("end_date", params.end_date);
+  if (params.status) searchParams.set("status", params.status);
+
+  const res = await fetch(`${CONVERSIONS_URL}?${searchParams.toString()}`);
+  if (!res.ok) throw new Error("Failed to fetch conversions");
   return res.json();
 }
 
