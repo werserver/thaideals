@@ -6,6 +6,7 @@ import { StarRating } from "@/components/StarRating";
 import { FlashSaleCountdown } from "@/components/FlashSaleCountdown";
 import { AiReviews } from "@/components/AiReviews";
 import { AiDescription } from "@/components/AiDescription";
+import { FakeCompareTable } from "@/components/FakeCompareTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -271,6 +272,9 @@ export default function ProductDetail() {
             ดูสินค้าบนร้านค้าต้นทาง →
           </a>
         </div>
+
+        {/* Fake Compare Table */}
+        <FakeCompareTable product={product} />
 
         {/* Reviews Section */}
         <div className="space-y-6">

@@ -14,7 +14,6 @@ export function AiDescription({ productName, categoryName, price, currency }: Ai
   const [description, setDescription] = useState("");
   const [highlights, setHighlights] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [generated, setGenerated] = useState(false);
 
   const generate = async () => {
     setLoading(true);
@@ -26,7 +25,6 @@ export function AiDescription({ productName, categoryName, price, currency }: Ai
       if (data?.description) {
         setDescription(data.description);
         setHighlights(data.highlights || []);
-        setGenerated(true);
       }
     } catch (err) {
       console.error("Failed to generate description:", err);
@@ -35,24 +33,14 @@ export function AiDescription({ productName, categoryName, price, currency }: Ai
     }
   };
 
-  if (!generated) {
+  // Auto-generate on mount
+  useState(() => { generate(); });
+
+  if (!description) {
     return (
-      <div className="rounded-xl border-2 border-dashed border-accent/40 bg-accent/5 p-5 text-center space-y-3 animate-fade-in">
-        <Sparkles className="h-7 w-7 text-accent mx-auto" />
-        <p className="font-medium text-foreground text-sm">สร้างคำอธิบายสินค้าด้วย AI</p>
-        <Button variant="outline" size="sm" onClick={generate} disabled={loading} className="gap-2">
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              กำลังสร้าง...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4" />
-              สร้างคำอธิบาย
-            </>
-          )}
-        </Button>
+      <div className="flex items-center gap-2 text-sm text-muted-foreground py-3 animate-fade-in">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        กำลังสร้างคำอธิบายสินค้า...
       </div>
     );
   }
