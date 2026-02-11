@@ -7,6 +7,7 @@ import { FlashSaleCountdown } from "@/components/FlashSaleCountdown";
 import { AiReviews } from "@/components/AiReviews";
 import { AiDescription } from "@/components/AiDescription";
 import { FakeCompareTable } from "@/components/FakeCompareTable";
+import { RelatedProducts } from "@/components/RelatedProducts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -320,6 +321,8 @@ export default function ProductDetail() {
             />
           )}
         </div>
+        {/* Related Products */}
+        <RelatedProducts product={product} />
       </main>
 
       <footer className="border-t py-6 text-center text-sm text-muted-foreground">
