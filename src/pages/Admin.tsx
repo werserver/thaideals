@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { X, Plus, Save, Flame, Sparkles } from "lucide-react";
+import { X, Plus, Save, Flame, Sparkles, Key } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Admin() {
@@ -47,6 +47,25 @@ export default function Admin() {
       <Header />
       <main className="container mx-auto max-w-2xl px-4 py-8 space-y-6">
         <h1 className="text-2xl font-bold">ตั้งค่าระบบ</h1>
+
+        {/* API Token */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              API Token (Passio/Ecomobi)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Input
+              value={settings.apiToken}
+              onChange={(e) => setSettings((s) => ({ ...s, apiToken: e.target.value }))}
+              placeholder="ใส่ API Token..."
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground mt-2">Token สำหรับดึงข้อมูลสินค้าจาก Passio/Ecomobi API</p>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
