@@ -1,7 +1,12 @@
-const API_TOKEN = "QlpXZyCqMylKUjZiYchwB";
+import { getAdminSettings } from "@/lib/store";
+
 const API_TOKEN_PRIVATE = "jdNzOribbbAgmMmpXwvUC";
 const PRODUCTS_URL = "https://ga.passio.eco/api/v3/products";
 const CONVERSIONS_URL = "https://api.ecotrackings.com/api/v3/conversions";
+
+function getApiToken() {
+  return getAdminSettings().apiToken;
+}
 
 export interface Product {
   product_id: string;
@@ -41,7 +46,7 @@ export function getCachedProduct(id: string): Product | undefined {
 
 export async function fetchProducts(params: FetchProductsParams): Promise<ProductsResponse> {
   const searchParams = new URLSearchParams({
-    token: API_TOKEN,
+    token: getApiToken(),
     limit: String(params.limit ?? 20),
     page: String(params.page ?? 1),
   });

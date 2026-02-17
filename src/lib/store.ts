@@ -5,6 +5,7 @@ export interface AdminSettings {
   keywords: string[];
   enableFlashSale: boolean;
   enableAiReviews: boolean;
+  apiToken: string;
 }
 
 const STORAGE_KEY = "aff-shop-admin";
@@ -14,6 +15,7 @@ const defaultSettings: AdminSettings = {
   keywords: ["โปรโมชั่น", "ลดราคา", "สินค้ายอดนิยม", "ของใช้ในบ้าน", "แฟชั่น"],
   enableFlashSale: true,
   enableAiReviews: true,
+  apiToken: "IrDeZlvcbwNfPvWQuFOiz",
 };
 
 export function getAdminSettings(): AdminSettings {
