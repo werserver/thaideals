@@ -14,7 +14,7 @@ function validateParams(body: unknown): { valid: true; data: Record<string, stri
   const limit = Number(b.limit ?? 20);
   const page = Number(b.page ?? 1);
   if (!Number.isInteger(limit) || limit < 1 || limit > 100) return { valid: false, error: "Invalid limit" };
-  if (!Number.isInteger(page) || page < 1 || page > 1000) return { valid: false, error: "Invalid page" };
+  if (!Number.isInteger(page) || page < 1 || page > 10000) return { valid: false, error: "Invalid page" };
   data.limit = String(limit);
   data.page = String(page);
 
