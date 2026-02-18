@@ -60,7 +60,7 @@ export default function Admin() {
       <main className="container mx-auto max-w-2xl px-4 py-8 space-y-6">
         <h1 className="text-2xl font-bold">ตั้งค่าระบบ</h1>
 
-        {/* API Token */}
+        {/* API Token - managed server-side */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -69,13 +69,7 @@ export default function Admin() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Input
-              value={settings.apiToken}
-              onChange={(e) => setSettings((s) => ({ ...s, apiToken: e.target.value }))}
-              placeholder="ใส่ API Token..."
-              className="font-mono text-sm"
-            />
-            <p className="text-xs text-muted-foreground mt-2">Token สำหรับดึงข้อมูลสินค้าจาก Passio/Ecomobi API</p>
+            <p className="text-sm text-muted-foreground">API Token ถูกจัดการฝั่ง Server อย่างปลอดภัยแล้ว ไม่สามารถแก้ไขจากที่นี่ได้</p>
           </CardContent>
         </Card>
 
