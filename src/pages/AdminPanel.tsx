@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import {
   X, Plus, Save, Flame, Sparkles, DollarSign, ShoppingCart,
-  Clock, CheckCircle, XCircle, LogOut, Settings, BarChart3, KeyRound,
+  Clock, CheckCircle, XCircle, LogOut, Settings, BarChart3, KeyRound, Key, Store,
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchConversions, type Conversion } from "@/lib/api";
@@ -86,6 +86,7 @@ function SettingsTab() {
   const [settings, setSettings] = useState(getAdminSettings);
   const [newCategory, setNewCategory] = useState("");
   const [newKeyword, setNewKeyword] = useState("");
+  const [newAdvertiser, setNewAdvertiser] = useState("");
 
   const addCategory = () => {
     const val = newCategory.trim();
@@ -109,6 +110,17 @@ function SettingsTab() {
     setSettings((s) => ({ ...s, keywords: s.keywords.filter((k) => k !== kw) }));
   };
 
+  const addAdvertiser = () => {
+    const val = newAdvertiser.trim();
+    if (!val || settings.selectedAdvertisers.includes(val)) return;
+    setSettings((s) => ({ ...s, selectedAdvertisers: [...s.selectedAdvertisers, val] }));
+    setNewAdvertiser("");
+  };
+
+  const removeAdvertiser = (adv: string) => {
+    setSettings((s) => ({ ...s, selectedAdvertisers: s.selectedAdvertisers.filter((a) => a !== adv) }));
+  };
+
   const handleSave = () => {
     saveAdminSettings(settings);
     toast.success("บันทึกการตั้งค่าเรียบร้อย!");
@@ -116,6 +128,58 @@ function SettingsTab() {
 
   return (
     <div className="space-y-6">
+      {/* API Token */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Key className="h-5 w-5" />
+            API Token (Passio/Ecomobi)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Input
+            value={settings.apiToken}
+            onChange={(e) => setSettings((s) => ({ ...s, apiToken: e.target.value }))}
+            placeholder="ใส่ API Token..."
+            className="font-mono text-sm"
+          />
+          <p className="text-xs text-muted-foreground mt-2">Token สำหรับดึงข้อมูลสินค้าจาก Passio/Ecomobi API</p>
+        </CardContent>
+      </Card>
+
+      {/* Advertisers */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Store className="h-5 w-5" />
+            Advertiser (ร้านค้า)
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">เลือก Advertiser ID ที่ต้องการแสดงสินค้า (ว่าง = แสดงทั้งหมด)</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {settings.selectedAdvertisers.map((adv) => (
+              <Badge key={adv} variant="secondary" className="gap-1 pr-1">
+                {adv}
+                <button onClick={() => removeAdvertiser(adv)} className="rounded-full p-0.5 hover:bg-muted">
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={newAdvertiser}
+              onChange={(e) => setNewAdvertiser(e.target.value)}
+              placeholder="เพิ่ม Advertiser ID เช่น shopee.vn, lazada.vn..."
+              onKeyDown={(e) => e.key === "Enter" && addAdvertiser()}
+              className="font-mono text-sm"
+            />
+            <Button size="sm" onClick={addAdvertiser}><Plus className="h-4 w-4" /></Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader><CardTitle className="text-lg">หมวดหมู่สินค้า</CardTitle></CardHeader>
         <CardContent className="space-y-4">
