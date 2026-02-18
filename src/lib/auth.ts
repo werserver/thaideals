@@ -1,6 +1,24 @@
-// Admin credentials — default values, overridable via localStorage
+// Admin credentials — default generated on first use, overridable via localStorage
 const DEFAULT_USERNAME = "admin";
-const DEFAULT_PASSWORD = "Th@iD3als!2026#Sec";
+
+function generateRandomPassword(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*";
+  const arr = new Uint8Array(20);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, (b) => chars[b % chars.length]).join("");
+}
+
+// Generate a unique default password per browser instance (not hardcoded in source)
+function getDefaultPassword(): string {
+  const key = "aff-shop-default-pw-init";
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) return stored;
+  } catch {}
+  const pw = generateRandomPassword();
+  try { localStorage.setItem(key, pw); } catch {}
+  return pw;
+}
 
 const AUTH_KEY = "aff-shop-admin-auth";
 const CRED_KEY = "aff-shop-admin-cred";
@@ -15,7 +33,7 @@ function getCredentials(): Credentials {
     const raw = localStorage.getItem(CRED_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
-  return { username: DEFAULT_USERNAME, password: DEFAULT_PASSWORD };
+  return { username: DEFAULT_USERNAME, password: getDefaultPassword() };
 }
 
 export function verifyCredentials(username: string, password: string): boolean {

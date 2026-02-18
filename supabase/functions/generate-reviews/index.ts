@@ -1,8 +1,20 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+function validateInput(body: unknown): { valid: true; data: { productName: string; categoryName: string; price: number; currency: string } } | { valid: false; error: string } {
+  if (!body || typeof body !== "object") return { valid: false, error: "Invalid request body" };
+  const { productName, categoryName, price, currency } = body as Record<string, unknown>;
+  if (!productName || typeof productName !== "string" || productName.length > 200) return { valid: false, error: "Invalid product name" };
+  if (!categoryName || typeof categoryName !== "string" || categoryName.length > 100) return { valid: false, error: "Invalid category name" };
+  if (typeof price !== "number" || price < 0 || price > 1e9) return { valid: false, error: "Invalid price" };
+  if (!currency || typeof currency !== "string" || currency.length > 10) return { valid: false, error: "Invalid currency" };
+  return { valid: true, data: { productName: productName.slice(0, 200), categoryName: categoryName.slice(0, 100), price, currency: currency.slice(0, 10) } };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -10,7 +22,28 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { productName, categoryName, price, currency } = await req.json();
+    // Auth check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const token = authHeader.replace("Bearer ", "");
+    const { error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Input validation
+    const rawBody = await req.json();
+    const validation = validateInput(rawBody);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const { productName, categoryName, price, currency } = validation.data;
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(
@@ -70,10 +103,8 @@ Format: [{"name":"ชื่อผู้รีวิว","rating":4,"comment":"�
     const aiData = await response.json();
     const content = aiData.choices?.[0]?.message?.content || "[]";
 
-    // Parse the JSON from AI response
     let reviews = [];
     try {
-      // Remove any markdown code blocks if present
       const cleaned = content.replace(/```json?\n?/g, "").replace(/```/g, "").trim();
       reviews = JSON.parse(cleaned);
     } catch {
@@ -87,7 +118,7 @@ Format: [{"name":"ชื่อผู้รีวิว","rating":4,"comment":"�
   } catch (e) {
     console.error("Error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
