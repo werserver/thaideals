@@ -128,7 +128,7 @@ function SettingsTab() {
 
   return (
     <div className="space-y-6">
-      {/* API Token */}
+      {/* API Token - managed server-side */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
@@ -137,13 +137,7 @@ function SettingsTab() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Input
-            value={settings.apiToken}
-            onChange={(e) => setSettings((s) => ({ ...s, apiToken: e.target.value }))}
-            placeholder="ใส่ API Token..."
-            className="font-mono text-sm"
-          />
-          <p className="text-xs text-muted-foreground mt-2">Token สำหรับดึงข้อมูลสินค้าจาก Passio/Ecomobi API</p>
+          <p className="text-sm text-muted-foreground">API Token ถูกจัดการฝั่ง Server อย่างปลอดภัยแล้ว ไม่สามารถแก้ไขจากที่นี่ได้</p>
         </CardContent>
       </Card>
 

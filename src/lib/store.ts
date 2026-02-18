@@ -16,7 +16,7 @@ const defaultSettings: AdminSettings = {
   keywords: ["โปรโมชั่น", "ลดราคา", "สินค้ายอดนิยม", "ของใช้ในบ้าน", "แฟชั่น"],
   enableFlashSale: true,
   enableAiReviews: true,
-  apiToken: "IrDeZlvcbwNfPvWQuFOiz",
+  apiToken: "",
   selectedAdvertisers: [],
 };
 
