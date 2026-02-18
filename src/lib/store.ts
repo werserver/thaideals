@@ -6,6 +6,7 @@ export interface AdminSettings {
   enableFlashSale: boolean;
   enableAiReviews: boolean;
   apiToken: string;
+  selectedAdvertisers: string[];
 }
 
 const STORAGE_KEY = "aff-shop-admin";
@@ -16,6 +17,7 @@ const defaultSettings: AdminSettings = {
   enableFlashSale: true,
   enableAiReviews: true,
   apiToken: "IrDeZlvcbwNfPvWQuFOiz",
+  selectedAdvertisers: [],
 };
 
 export function getAdminSettings(): AdminSettings {

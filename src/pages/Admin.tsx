@@ -7,13 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { X, Plus, Save, Flame, Sparkles, Key } from "lucide-react";
+import { X, Plus, Save, Flame, Sparkles, Key, Store } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Admin() {
   const [settings, setSettings] = useState(getAdminSettings);
   const [newCategory, setNewCategory] = useState("");
   const [newKeyword, setNewKeyword] = useState("");
+  const [newAdvertiser, setNewAdvertiser] = useState("");
 
   const addCategory = () => {
     const val = newCategory.trim();
@@ -35,6 +36,17 @@ export default function Admin() {
 
   const removeKeyword = (kw: string) => {
     setSettings((s) => ({ ...s, keywords: s.keywords.filter((k) => k !== kw) }));
+  };
+
+  const addAdvertiser = () => {
+    const val = newAdvertiser.trim();
+    if (!val || settings.selectedAdvertisers.includes(val)) return;
+    setSettings((s) => ({ ...s, selectedAdvertisers: [...s.selectedAdvertisers, val] }));
+    setNewAdvertiser("");
+  };
+
+  const removeAdvertiser = (adv: string) => {
+    setSettings((s) => ({ ...s, selectedAdvertisers: s.selectedAdvertisers.filter((a) => a !== adv) }));
   };
 
   const handleSave = () => {
@@ -64,6 +76,41 @@ export default function Admin() {
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground mt-2">Token สำหรับดึงข้อมูลสินค้าจาก Passio/Ecomobi API</p>
+          </CardContent>
+        </Card>
+
+        {/* Advertisers */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Store className="h-5 w-5" />
+              Advertiser (ร้านค้า)
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">เลือก Advertiser ID ที่ต้องการแสดงสินค้า (ว่าง = แสดงทั้งหมด)</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {settings.selectedAdvertisers.map((adv) => (
+                <Badge key={adv} variant="secondary" className="gap-1 pr-1">
+                  {adv}
+                  <button onClick={() => removeAdvertiser(adv)} className="rounded-full p-0.5 hover:bg-muted">
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={newAdvertiser}
+                onChange={(e) => setNewAdvertiser(e.target.value)}
+                placeholder="เพิ่ม Advertiser ID..."
+                onKeyDown={(e) => e.key === "Enter" && addAdvertiser()}
+                className="font-mono text-sm"
+              />
+              <Button size="sm" onClick={addAdvertiser}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
