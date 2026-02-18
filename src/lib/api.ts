@@ -37,7 +37,27 @@ export function getCachedProduct(id: string): Product | undefined {
   return productCache.get(id);
 }
 
+// Page-level response cache for faster repeat loads
+const pageCache = new Map<string, { data: ProductsResponse; timestamp: number }>();
+const PAGE_CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+
+function getPageCacheKey(params: FetchProductsParams): string {
+  return JSON.stringify({
+    keyword: params.keyword,
+    category_id: params.category_id,
+    advertiser_id: params.advertiser_id,
+    limit: params.limit ?? 20,
+    page: params.page ?? 1,
+  });
+}
+
 export async function fetchProducts(params: FetchProductsParams): Promise<ProductsResponse> {
+  const cacheKey = getPageCacheKey(params);
+  const cached = pageCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < PAGE_CACHE_TTL) {
+    return cached.data;
+  }
+
   const { data, error } = await supabase.functions.invoke("fetch-products", {
     body: {
       keyword: params.keyword,
@@ -53,6 +73,9 @@ export async function fetchProducts(params: FetchProductsParams): Promise<Produc
 
   // Cache all fetched products
   result.data.forEach((p) => productCache.set(p.product_id, p));
+
+  // Cache page response
+  pageCache.set(cacheKey, { data: result, timestamp: Date.now() });
 
   return result;
 }

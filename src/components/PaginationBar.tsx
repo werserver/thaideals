@@ -14,7 +14,7 @@ export function PaginationBar({
   itemsPerPage,
   onPageChange,
 }: PaginationBarProps) {
-  const totalPages = Math.min(Math.ceil(totalItems / itemsPerPage), 100); // API max 100 pages
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   if (totalPages <= 1) return null;
 

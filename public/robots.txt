@@ -14,4 +14,4 @@ User-agent: *
 Allow: /
 Disallow: /admin
 
-Sitemap: https://thaideals.lovable.app/sitemap.xml
+Sitemap: https://mswztzqwwqvketdvtdya.supabase.co/functions/v1/sitemap
