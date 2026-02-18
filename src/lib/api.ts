@@ -33,6 +33,7 @@ export interface ProductsResponse {
 export interface FetchProductsParams {
   keyword?: string;
   category_id?: string;
+  advertiser_id?: string;
   limit?: number;
   page?: number;
 }
@@ -53,6 +54,7 @@ export async function fetchProducts(params: FetchProductsParams): Promise<Produc
 
   if (params.keyword) searchParams.set("keyword", params.keyword);
   if (params.category_id) searchParams.set("category_id", params.category_id);
+  if (params.advertiser_id) searchParams.set("advertiser_id", params.advertiser_id);
 
   const res = await fetch(`${PRODUCTS_URL}?${searchParams.toString()}`);
   if (!res.ok) throw new Error("Failed to fetch products");
