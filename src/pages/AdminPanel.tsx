@@ -3,7 +3,8 @@ import { Header } from "@/components/Header";
 import { SEOHead } from "@/components/SEOHead";
 import { AdminLogin } from "@/components/AdminLogin";
 import { isAdminLoggedIn, logoutAdmin, changePassword, changeUsername, getUsername } from "@/lib/auth";
-import { getAdminSettings, saveAdminSettings } from "@/lib/store";
+import { getAdminSettings } from "@/lib/store";
+import config from "@/lib/config";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,7 @@ import {
 import {
   X, Plus, Save, Flame, Sparkles, DollarSign, ShoppingCart,
   Clock, CheckCircle, XCircle, LogOut, Settings, BarChart3, KeyRound, Key, Store,
+  Database, FileSpreadsheet, Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchConversions, type Conversion } from "@/lib/api";
@@ -83,147 +85,100 @@ export default function AdminPanel() {
 
 /* ========== Settings Tab ========== */
 function SettingsTab() {
-  const [settings, setSettings] = useState(getAdminSettings);
-  const [newCategory, setNewCategory] = useState("");
-  const [newKeyword, setNewKeyword] = useState("");
-  const [newAdvertiser, setNewAdvertiser] = useState("");
-
-  const addCategory = () => {
-    const val = newCategory.trim();
-    if (!val || settings.categories.includes(val)) return;
-    setSettings((s) => ({ ...s, categories: [...s.categories, val] }));
-    setNewCategory("");
-  };
-
-  const removeCategory = (cat: string) => {
-    setSettings((s) => ({ ...s, categories: s.categories.filter((c) => c !== cat) }));
-  };
-
-  const addKeyword = () => {
-    const val = newKeyword.trim();
-    if (!val || settings.keywords.includes(val)) return;
-    setSettings((s) => ({ ...s, keywords: [...s.keywords, val] }));
-    setNewKeyword("");
-  };
-
-  const removeKeyword = (kw: string) => {
-    setSettings((s) => ({ ...s, keywords: s.keywords.filter((k) => k !== kw) }));
-  };
-
-  const addAdvertiser = () => {
-    const val = newAdvertiser.trim();
-    if (!val || settings.selectedAdvertisers.includes(val)) return;
-    setSettings((s) => ({ ...s, selectedAdvertisers: [...s.selectedAdvertisers, val] }));
-    setNewAdvertiser("");
-  };
-
-  const removeAdvertiser = (adv: string) => {
-    setSettings((s) => ({ ...s, selectedAdvertisers: s.selectedAdvertisers.filter((a) => a !== adv) }));
-  };
-
-  const handleSave = () => {
-    saveAdminSettings(settings);
-    toast.success("บันทึกการตั้งค่าเรียบร้อย!");
-  };
+  const settings = getAdminSettings();
 
   return (
     <div className="space-y-6">
+      {/* Data Source Info */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            {config.dataSource === "csv" ? (
+              <FileSpreadsheet className="h-5 w-5 text-primary" />
+            ) : (
+              <Database className="h-5 w-5 text-primary" />
+            )}
+            แหล่งข้อมูลสินค้า
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Badge variant={config.dataSource === "api" ? "default" : "secondary"}>
+              {config.dataSource === "api" ? "API (Passio/Ecomobi)" : "CSV File"}
+            </Badge>
+            {config.dataSource === "csv" && (
+              <span className="text-xs text-muted-foreground font-mono">{config.csvFilePath}</span>
+            )}
+          </div>
+          <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
+            <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              การตั้งค่าทั้งหมดถูก hardcode ในไฟล์ <code className="font-mono bg-muted px-1 rounded">src/lib/config.ts</code> เพื่อรองรับการ deploy หลายเว็บไซต์พร้อมกัน
+              แก้ไขไฟล์นั้นเพื่อเปลี่ยนแหล่งข้อมูล, หมวดหมู่, คำค้น และอื่นๆ
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* API Token - managed server-side */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Key className="h-5 w-5" />
-            API Token (Passio/Ecomobi)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">API Token ถูกจัดการฝั่ง Server อย่างปลอดภัยแล้ว ไม่สามารถแก้ไขจากที่นี่ได้</p>
-        </CardContent>
-      </Card>
+      {config.dataSource === "api" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              API Token (Passio/Ecomobi)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">API Token ถูกจัดการฝั่ง Server อย่างปลอดภัยแล้ว ไม่สามารถแก้ไขจากที่นี่ได้</p>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Advertisers */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Store className="h-5 w-5" />
-            Advertiser (ร้านค้า)
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">เลือก Advertiser ID ที่ต้องการแสดงสินค้า (ว่าง = แสดงทั้งหมด)</p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {settings.selectedAdvertisers.map((adv) => (
-              <Badge key={adv} variant="secondary" className="gap-1 pr-1">
-                {adv}
-                <button onClick={() => removeAdvertiser(adv)} className="rounded-full p-0.5 hover:bg-muted">
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <Input
-              value={newAdvertiser}
-              onChange={(e) => setNewAdvertiser(e.target.value)}
-              placeholder="เพิ่ม Advertiser ID เช่น shopee.vn, lazada.vn..."
-              onKeyDown={(e) => e.key === "Enter" && addAdvertiser()}
-              className="font-mono text-sm"
-            />
-            <Button size="sm" onClick={addAdvertiser}><Plus className="h-4 w-4" /></Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Advertisers (API mode only) */}
+      {config.dataSource === "api" && settings.selectedAdvertisers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Store className="h-5 w-5" />
+              Advertiser (ร้านค้า)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {settings.selectedAdvertisers.map((adv) => (
+                <Badge key={adv} variant="secondary">{adv}</Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
+      {/* Categories (read-only) */}
       <Card>
         <CardHeader><CardTitle className="text-lg">หมวดหมู่สินค้า</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <div className="flex flex-wrap gap-2">
             {settings.categories.map((cat) => (
-              <Badge key={cat} variant="secondary" className="gap-1 pr-1">
-                {cat}
-                <button onClick={() => removeCategory(cat)} className="rounded-full p-0.5 hover:bg-muted">
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
+              <Badge key={cat} variant="secondary">{cat}</Badge>
             ))}
-          </div>
-          <div className="flex gap-2">
-            <Input
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="เพิ่มหมวดหมู่..."
-              onKeyDown={(e) => e.key === "Enter" && addCategory()}
-            />
-            <Button size="sm" onClick={addCategory}><Plus className="h-4 w-4" /></Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Keywords (read-only) */}
       <Card>
         <CardHeader><CardTitle className="text-lg">คำค้นหลัก</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <div className="flex flex-wrap gap-2">
             {settings.keywords.map((kw) => (
-              <Badge key={kw} variant="secondary" className="gap-1 pr-1">
-                {kw}
-                <button onClick={() => removeKeyword(kw)} className="rounded-full p-0.5 hover:bg-muted">
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
+              <Badge key={kw} variant="secondary">{kw}</Badge>
             ))}
-          </div>
-          <div className="flex gap-2">
-            <Input
-              value={newKeyword}
-              onChange={(e) => setNewKeyword(e.target.value)}
-              placeholder="เพิ่มคำค้น..."
-              onKeyDown={(e) => e.key === "Enter" && addKeyword()}
-            />
-            <Button size="sm" onClick={addKeyword}><Plus className="h-4 w-4" /></Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Feature toggles (read-only) */}
       <Card>
         <CardHeader><CardTitle className="text-lg">ออฟชั่นเสริม</CardTitle></CardHeader>
         <CardContent className="space-y-5">
@@ -231,29 +186,28 @@ function SettingsTab() {
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-destructive/10 p-2"><Flame className="h-5 w-5 text-destructive" /></div>
               <div>
-                <Label htmlFor="flash-sale" className="font-medium cursor-pointer">Flash Sale Countdown</Label>
+                <Label className="font-medium">Flash Sale Countdown</Label>
                 <p className="text-xs text-muted-foreground">แสดงเวลานับถอยหลังเร่งการซื้อ</p>
               </div>
             </div>
-            <Switch id="flash-sale" checked={settings.enableFlashSale} onCheckedChange={(v) => setSettings((s) => ({ ...s, enableFlashSale: v }))} />
+            <Badge variant={settings.enableFlashSale ? "default" : "secondary"}>
+              {settings.enableFlashSale ? "เปิด" : "ปิด"}
+            </Badge>
           </div>
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-primary/10 p-2"><Sparkles className="h-5 w-5 text-primary" /></div>
               <div>
-                <Label htmlFor="ai-reviews" className="font-medium cursor-pointer">AI Reviews (Gemini Flash)</Label>
+                <Label className="font-medium">AI Reviews (Gemini Flash)</Label>
                 <p className="text-xs text-muted-foreground">ใช้ AI สร้างรีวิวสินค้าอัตโนมัติ</p>
               </div>
             </div>
-            <Switch id="ai-reviews" checked={settings.enableAiReviews} onCheckedChange={(v) => setSettings((s) => ({ ...s, enableAiReviews: v }))} />
+            <Badge variant={settings.enableAiReviews ? "default" : "secondary"}>
+              {settings.enableAiReviews ? "เปิด" : "ปิด"}
+            </Badge>
           </div>
         </CardContent>
       </Card>
-
-      <Button onClick={handleSave} className="w-full gap-2">
-        <Save className="h-4 w-4" />
-        บันทึกการตั้งค่า
-      </Button>
     </div>
   );
 }

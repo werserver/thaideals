@@ -1,4 +1,7 @@
-// Admin settings stored in localStorage
+// Admin settings — re-exports from hardcoded config file
+// Edit src/lib/config.ts to change defaults for each site deployment
+
+import config, { type SiteConfig } from "@/lib/config";
 
 export interface AdminSettings {
   categories: string[];
@@ -7,27 +10,24 @@ export interface AdminSettings {
   enableAiReviews: boolean;
   apiToken: string;
   selectedAdvertisers: string[];
+  dataSource: "api" | "csv";
+  csvFilePath: string;
 }
-
-const STORAGE_KEY = "aff-shop-admin";
-
-const defaultSettings: AdminSettings = {
-  categories: ["Electronics", "Fashion", "Home & Living", "Health & Beauty", "Sports & Outdoors"],
-  keywords: ["โปรโมชั่น", "ลดราคา", "สินค้ายอดนิยม", "ของใช้ในบ้าน", "แฟชั่น"],
-  enableFlashSale: true,
-  enableAiReviews: true,
-  apiToken: "",
-  selectedAdvertisers: [],
-};
 
 export function getAdminSettings(): AdminSettings {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return defaultSettings;
+  return {
+    categories: config.categories,
+    keywords: config.keywords,
+    enableFlashSale: config.enableFlashSale,
+    enableAiReviews: config.enableAiReviews,
+    apiToken: "",
+    selectedAdvertisers: config.selectedAdvertisers,
+    dataSource: config.dataSource,
+    csvFilePath: config.csvFilePath,
+  };
 }
 
-export function saveAdminSettings(settings: AdminSettings) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+// No-op — settings are now hardcoded in config.ts
+export function saveAdminSettings(_settings: AdminSettings) {
+  console.info("Settings are hardcoded in src/lib/config.ts — edit that file to change defaults.");
 }
