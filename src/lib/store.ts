@@ -1,33 +1,63 @@
-// Admin settings — re-exports from hardcoded config file
-// Edit src/lib/config.ts to change defaults for each site deployment
+// Admin settings — stored in localStorage, with config.ts as defaults
+import config from "@/lib/config";
 
-import config, { type SiteConfig } from "@/lib/config";
+const SETTINGS_KEY = "aff-shop-settings";
+const CSV_DATA_KEY = "aff-shop-csv-data";
 
 export interface AdminSettings {
+  dataSource: "api" | "csv";
+  apiToken: string;
   categories: string[];
   keywords: string[];
+  selectedAdvertisers: string[];
   enableFlashSale: boolean;
   enableAiReviews: boolean;
-  apiToken: string;
-  selectedAdvertisers: string[];
-  dataSource: "api" | "csv";
-  csvFilePath: string;
+  defaultCurrency: string;
+  csvFileName: string;
 }
 
-export function getAdminSettings(): AdminSettings {
+function getDefaults(): AdminSettings {
   return {
-    categories: config.categories,
-    keywords: config.keywords,
+    dataSource: config.dataSource,
+    apiToken: "",
+    categories: [...config.categories],
+    keywords: [...config.keywords],
+    selectedAdvertisers: [...config.selectedAdvertisers],
     enableFlashSale: config.enableFlashSale,
     enableAiReviews: config.enableAiReviews,
-    apiToken: "",
-    selectedAdvertisers: config.selectedAdvertisers,
-    dataSource: config.dataSource,
-    csvFilePath: config.csvFilePath,
+    defaultCurrency: config.defaultCurrency,
+    csvFileName: "",
   };
 }
 
-// No-op — settings are now hardcoded in config.ts
-export function saveAdminSettings(_settings: AdminSettings) {
-  console.info("Settings are hardcoded in src/lib/config.ts — edit that file to change defaults.");
+export function getAdminSettings(): AdminSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      return { ...getDefaults(), ...saved };
+    }
+  } catch {}
+  return getDefaults();
+}
+
+export function saveAdminSettings(settings: AdminSettings): void {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+// CSV data stored in localStorage
+export function getCsvData(): string | null {
+  try {
+    return localStorage.getItem(CSV_DATA_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function saveCsvData(csvText: string): void {
+  localStorage.setItem(CSV_DATA_KEY, csvText);
+}
+
+export function clearCsvData(): void {
+  localStorage.removeItem(CSV_DATA_KEY);
 }

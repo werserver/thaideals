@@ -2,13 +2,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { fetchProducts } from "@/lib/api";
 import { fetchCsvProducts } from "@/lib/csv-products";
-import config from "@/lib/config";
+import { getAdminSettings } from "@/lib/store";
 
 export function useProducts(keyword?: string, categoryId?: string, page = 1) {
   const queryClient = useQueryClient();
-  const dataSource = config.dataSource;
-  const advertiserIds = config.selectedAdvertisers.length > 0
-    ? config.selectedAdvertisers.join(",")
+  const settings = getAdminSettings();
+  const dataSource = settings.dataSource;
+  const advertiserIds = settings.selectedAdvertisers.length > 0
+    ? settings.selectedAdvertisers.join(",")
     : undefined;
 
   const query = useQuery({

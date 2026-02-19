@@ -1,5 +1,6 @@
 import Papa from "papaparse";
 import type { Product, ProductsResponse } from "@/lib/api";
+import { getAdminSettings, getCsvData } from "@/lib/store";
 import config from "@/lib/config";
 
 interface ShopeeRow {
@@ -27,6 +28,7 @@ let cacheTimestamp = 0;
 const CACHE_TTL = 1000 * 60 * 10; // 10 minutes
 
 function mapRowToProduct(row: ShopeeRow): Product {
+  const settings = getAdminSettings();
   const originalPrice = parseFloat(row.original_price) || parseFloat(row.price) || 0;
   const currentPrice = parseFloat(row.price_min) || parseFloat(row.price) || 0;
   const discountPct = parseInt(row.discount) || (originalPrice > currentPrice
@@ -46,7 +48,7 @@ function mapRowToProduct(row: ShopeeRow): Product {
     product_price: originalPrice,
     product_discounted: currentPrice,
     product_discounted_percentage: discountPct,
-    product_currency: config.defaultCurrency,
+    product_currency: settings.defaultCurrency || config.defaultCurrency,
     product_link: row.url || "",
     tracking_link: row.url || "",
     category_id: "",
@@ -61,13 +63,16 @@ async function loadCsvProducts(): Promise<Product[]> {
     return cachedProducts;
   }
 
-  const response = await fetch(config.csvFilePath);
-  if (!response.ok) throw new Error("Failed to load CSV file");
-
-  const csvText = await response.text();
+  // Try localStorage CSV first, then fallback to file
+  let csvText = getCsvData();
+  if (!csvText) {
+    const response = await fetch(config.csvFilePath);
+    if (!response.ok) throw new Error("Failed to load CSV file");
+    csvText = await response.text();
+  }
 
   return new Promise((resolve, reject) => {
-    Papa.parse<ShopeeRow>(csvText, {
+    Papa.parse<ShopeeRow>(csvText!, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
@@ -94,7 +99,6 @@ export async function fetchCsvProducts(params: {
 
   let filtered = allProducts;
 
-  // keyword search
   if (params.keyword) {
     const kw = params.keyword.toLowerCase();
     filtered = filtered.filter(

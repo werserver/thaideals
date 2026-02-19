@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { getAdminSettings } from "@/lib/store";
 
 export interface Product {
   product_id: string;
@@ -51,6 +51,8 @@ function getPageCacheKey(params: FetchProductsParams): string {
   });
 }
 
+const PRODUCTS_URL = "https://ga.passio.eco/api/v3/products";
+
 export async function fetchProducts(params: FetchProductsParams): Promise<ProductsResponse> {
   const cacheKey = getPageCacheKey(params);
   const cached = pageCache.get(cacheKey);
@@ -58,18 +60,23 @@ export async function fetchProducts(params: FetchProductsParams): Promise<Produc
     return cached.data;
   }
 
-  const { data, error } = await supabase.functions.invoke("fetch-products", {
-    body: {
-      keyword: params.keyword,
-      category_id: params.category_id,
-      advertiser_id: params.advertiser_id,
-      limit: params.limit ?? 20,
-      page: params.page ?? 1,
-    },
-  });
+  const settings = getAdminSettings();
+  const token = settings.apiToken;
+  if (!token) throw new Error("API Token ยังไม่ได้ตั้งค่า กรุณาไปที่หน้า Admin เพื่อกรอก API Token");
 
-  if (error) throw new Error("Failed to fetch products");
-  const result: ProductsResponse = data;
+  const queryParams = new URLSearchParams({
+    token,
+    limit: String(params.limit ?? 20),
+    page: String(params.page ?? 1),
+  });
+  if (params.keyword) queryParams.set("keyword", params.keyword);
+  if (params.category_id) queryParams.set("category_id", params.category_id);
+  if (params.advertiser_id) queryParams.set("advertiser_id", params.advertiser_id);
+
+  const res = await fetch(`${PRODUCTS_URL}?${queryParams.toString()}`);
+  if (!res.ok) throw new Error("Failed to fetch products");
+
+  const result: ProductsResponse = await res.json();
 
   // Cache all fetched products
   result.data.forEach((p) => productCache.set(p.product_id, p));
@@ -114,6 +121,8 @@ export interface ConversionsResponse {
   data: Conversion[];
 }
 
+const CONVERSIONS_URL = "https://api.ecotrackings.com/api/v3/conversions";
+
 export async function fetchConversions(params: {
   start_date?: string;
   end_date?: string;
@@ -121,18 +130,22 @@ export async function fetchConversions(params: {
   limit?: number;
   page?: number;
 }): Promise<ConversionsResponse> {
-  const { data, error } = await supabase.functions.invoke("fetch-conversions", {
-    body: {
-      start_date: params.start_date,
-      end_date: params.end_date,
-      status: params.status,
-      limit: params.limit ?? 50,
-      page: params.page ?? 1,
-    },
-  });
+  const settings = getAdminSettings();
+  const token = settings.apiToken;
+  if (!token) throw new Error("API Token ยังไม่ได้ตั้งค่า");
 
-  if (error) throw new Error("Failed to fetch conversions");
-  return data;
+  const queryParams = new URLSearchParams({
+    token_private: token,
+    limit: String(params.limit ?? 50),
+    page: String(params.page ?? 1),
+  });
+  if (params.start_date) queryParams.set("start_date", params.start_date);
+  if (params.end_date) queryParams.set("end_date", params.end_date);
+  if (params.status) queryParams.set("status", params.status);
+
+  const res = await fetch(`${CONVERSIONS_URL}?${queryParams.toString()}`);
+  if (!res.ok) throw new Error("Failed to fetch conversions");
+  return res.json();
 }
 
 // Generate fake but consistent rating/review for a product
