@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Header } from "@/components/Header";
 import { SEOHead } from "@/components/SEOHead";
 import { AdminLogin } from "@/components/AdminLogin";
-import { isAdminLoggedIn, logoutAdmin, changePassword, changeUsername, getUsername } from "@/lib/auth";
-import { getAdminSettings } from "@/lib/store";
-import config from "@/lib/config";
+import { isAdminLoggedIn, logoutAdmin, getUsername } from "@/lib/auth";
+import { getAdminSettings, saveAdminSettings, saveCsvData, type AdminSettings } from "@/lib/store";
+import { clearCsvCache } from "@/lib/csv-products";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,8 +21,8 @@ import {
 } from "@/components/ui/select";
 import {
   X, Plus, Save, Flame, Sparkles, DollarSign, ShoppingCart,
-  Clock, CheckCircle, XCircle, LogOut, Settings, BarChart3, KeyRound, Key, Store,
-  Database, FileSpreadsheet, Info,
+  Clock, CheckCircle, XCircle, LogOut, Settings, BarChart3,
+  Key, Upload, FileSpreadsheet, Database,
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchConversions, type Conversion } from "@/lib/api";
@@ -53,7 +53,7 @@ export default function AdminPanel() {
         </div>
 
         <Tabs defaultValue="settings">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="settings" className="gap-1.5">
               <Settings className="h-4 w-4" />
               ตั้งค่า
@@ -61,10 +61,6 @@ export default function AdminPanel() {
             <TabsTrigger value="dashboard" className="gap-1.5">
               <BarChart3 className="h-4 w-4" />
               Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="security" className="gap-1.5">
-              <KeyRound className="h-4 w-4" />
-              ความปลอดภัย
             </TabsTrigger>
           </TabsList>
 
@@ -74,9 +70,6 @@ export default function AdminPanel() {
           <TabsContent value="dashboard" className="mt-6">
             <DashboardTab />
           </TabsContent>
-          <TabsContent value="security" className="mt-6">
-            <SecurityTab />
-          </TabsContent>
         </Tabs>
       </main>
     </div>
@@ -85,43 +78,131 @@ export default function AdminPanel() {
 
 /* ========== Settings Tab ========== */
 function SettingsTab() {
-  const settings = getAdminSettings();
+  const [settings, setSettings] = useState<AdminSettings>(getAdminSettings);
+  const [newCategory, setNewCategory] = useState("");
+  const [newKeyword, setNewKeyword] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const update = (partial: Partial<AdminSettings>) => {
+    setSettings((prev) => ({ ...prev, ...partial }));
+  };
+
+  const handleSave = () => {
+    saveAdminSettings(settings);
+    clearCsvCache();
+    toast.success("บันทึกการตั้งค่าเรียบร้อย!");
+  };
+
+  const addCategory = () => {
+    const cat = newCategory.trim();
+    if (!cat || settings.categories.includes(cat)) return;
+    update({ categories: [...settings.categories, cat] });
+    setNewCategory("");
+  };
+
+  const removeCategory = (cat: string) => {
+    update({ categories: settings.categories.filter((c) => c !== cat) });
+  };
+
+  const addKeyword = () => {
+    const kw = newKeyword.trim();
+    if (!kw || settings.keywords.includes(kw)) return;
+    update({ keywords: [...settings.keywords, kw] });
+    setNewKeyword("");
+  };
+
+  const removeKeyword = (kw: string) => {
+    update({ keywords: settings.keywords.filter((k) => k !== kw) });
+  };
+
+  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".csv")) {
+      toast.error("กรุณาเลือกไฟล์ .csv เท่านั้น");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      saveCsvData(text);
+      clearCsvCache();
+      update({ csvFileName: file.name, dataSource: "csv" });
+      toast.success(`อัปโหลดไฟล์ ${file.name} เรียบร้อย!`);
+    };
+    reader.readAsText(file);
+    // Reset file input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   return (
     <div className="space-y-6">
-      {/* Data Source Info */}
+      {/* Data Source */}
       <Card className="border-primary/30 bg-primary/5">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            {config.dataSource === "csv" ? (
-              <FileSpreadsheet className="h-5 w-5 text-primary" />
-            ) : (
-              <Database className="h-5 w-5 text-primary" />
-            )}
+            <Database className="h-5 w-5 text-primary" />
             แหล่งข้อมูลสินค้า
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Badge variant={config.dataSource === "api" ? "default" : "secondary"}>
-              {config.dataSource === "api" ? "API (Passio/Ecomobi)" : "CSV File"}
-            </Badge>
-            {config.dataSource === "csv" && (
-              <span className="text-xs text-muted-foreground font-mono">{config.csvFilePath}</span>
-            )}
+        <CardContent className="space-y-4">
+          <div className="flex gap-3">
+            <Button
+              variant={settings.dataSource === "api" ? "default" : "outline"}
+              size="sm"
+              className="gap-2"
+              onClick={() => update({ dataSource: "api" })}
+            >
+              <Database className="h-4 w-4" />
+              API (Passio/Ecomobi)
+            </Button>
+            <Button
+              variant={settings.dataSource === "csv" ? "default" : "outline"}
+              size="sm"
+              className="gap-2"
+              onClick={() => update({ dataSource: "csv" })}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              CSV File
+            </Button>
           </div>
-          <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
-            <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-            <p className="text-xs text-muted-foreground">
-              การตั้งค่าทั้งหมดถูก hardcode ในไฟล์ <code className="font-mono bg-muted px-1 rounded">src/lib/config.ts</code> เพื่อรองรับการ deploy หลายเว็บไซต์พร้อมกัน
-              แก้ไขไฟล์นั้นเพื่อเปลี่ยนแหล่งข้อมูล, หมวดหมู่, คำค้น และอื่นๆ
-            </p>
-          </div>
+
+          {/* CSV Upload */}
+          {settings.dataSource === "csv" && (
+            <div className="space-y-3 rounded-lg border bg-card p-4">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4" />
+                  อัปโหลดไฟล์ CSV
+                </Button>
+                {settings.csvFileName && (
+                  <span className="text-sm text-muted-foreground">
+                    📄 {settings.csvFileName}
+                  </span>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={handleCsvUpload}
+              />
+              <p className="text-xs text-muted-foreground">
+                รองรับ Shopee CSV format (id, name, price, image, url, category ฯลฯ)
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* API Token - managed server-side */}
-      {config.dataSource === "api" && (
+      {/* API Token */}
+      {settings.dataSource === "api" && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -129,56 +210,85 @@ function SettingsTab() {
               API Token (Passio/Ecomobi)
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">API Token ถูกจัดการฝั่ง Server อย่างปลอดภัยแล้ว ไม่สามารถแก้ไขจากที่นี่ได้</p>
+          <CardContent className="space-y-3">
+            <Input
+              type="password"
+              placeholder="กรอก API Token ที่นี่"
+              value={settings.apiToken}
+              onChange={(e) => update({ apiToken: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Token จะถูกเก็บใน localStorage ของเบราว์เซอร์นี้
+            </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Advertisers (API mode only) */}
-      {config.dataSource === "api" && settings.selectedAdvertisers.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Store className="h-5 w-5" />
-              Advertiser (ร้านค้า)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {settings.selectedAdvertisers.map((adv) => (
-                <Badge key={adv} variant="secondary">{adv}</Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Categories (read-only) */}
+      {/* Categories */}
       <Card>
         <CardHeader><CardTitle className="text-lg">หมวดหมู่สินค้า</CardTitle></CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {settings.categories.map((cat) => (
-              <Badge key={cat} variant="secondary">{cat}</Badge>
+              <Badge key={cat} variant="secondary" className="gap-1 pr-1">
+                {cat}
+                <button
+                  onClick={() => removeCategory(cat)}
+                  className="ml-1 rounded-full p-0.5 hover:bg-destructive/20"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
             ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="เพิ่มหมวดหมู่..."
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addCategory()}
+              className="max-w-xs"
+            />
+            <Button size="sm" variant="outline" onClick={addCategory}>
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Keywords (read-only) */}
+      {/* Keywords */}
       <Card>
         <CardHeader><CardTitle className="text-lg">คำค้นหลัก</CardTitle></CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {settings.keywords.map((kw) => (
-              <Badge key={kw} variant="secondary">{kw}</Badge>
+              <Badge key={kw} variant="secondary" className="gap-1 pr-1">
+                {kw}
+                <button
+                  onClick={() => removeKeyword(kw)}
+                  className="ml-1 rounded-full p-0.5 hover:bg-destructive/20"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
             ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="เพิ่มคำค้น..."
+              value={newKeyword}
+              onChange={(e) => setNewKeyword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addKeyword()}
+              className="max-w-xs"
+            />
+            <Button size="sm" variant="outline" onClick={addKeyword}>
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Feature toggles (read-only) */}
+      {/* Feature toggles */}
       <Card>
         <CardHeader><CardTitle className="text-lg">ออฟชั่นเสริม</CardTitle></CardHeader>
         <CardContent className="space-y-5">
@@ -190,9 +300,10 @@ function SettingsTab() {
                 <p className="text-xs text-muted-foreground">แสดงเวลานับถอยหลังเร่งการซื้อ</p>
               </div>
             </div>
-            <Badge variant={settings.enableFlashSale ? "default" : "secondary"}>
-              {settings.enableFlashSale ? "เปิด" : "ปิด"}
-            </Badge>
+            <Switch
+              checked={settings.enableFlashSale}
+              onCheckedChange={(v) => update({ enableFlashSale: v })}
+            />
           </div>
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="flex items-center gap-3">
@@ -202,12 +313,21 @@ function SettingsTab() {
                 <p className="text-xs text-muted-foreground">ใช้ AI สร้างรีวิวสินค้าอัตโนมัติ</p>
               </div>
             </div>
-            <Badge variant={settings.enableAiReviews ? "default" : "secondary"}>
-              {settings.enableAiReviews ? "เปิด" : "ปิด"}
-            </Badge>
+            <Switch
+              checked={settings.enableAiReviews}
+              onCheckedChange={(v) => update({ enableAiReviews: v })}
+            />
           </div>
         </CardContent>
       </Card>
+
+      {/* Save Button */}
+      <div className="sticky bottom-4 flex justify-end">
+        <Button size="lg" className="gap-2 shadow-lg" onClick={handleSave}>
+          <Save className="h-5 w-5" />
+          บันทึกการตั้งค่า
+        </Button>
+      </div>
     </div>
   );
 }
@@ -293,7 +413,7 @@ function DashboardTab() {
         <Button size="sm" onClick={loadData}>ค้นหา</Button>
       </div>
 
-      {error && <div className="rounded-xl border border-sale/30 bg-sale/10 p-4 text-sm text-sale">{error}</div>}
+      {error && <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">{error}</div>}
 
       {/* Stats */}
       {loading ? (
@@ -319,16 +439,16 @@ function DashboardTab() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">รายได้อนุมัติ</CardTitle>
-              <CheckCircle className="h-4 w-4 text-success" />
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent><p className="text-2xl font-bold text-success">{fmt(stats.totalApproved)}</p></CardContent>
+            <CardContent><p className="text-2xl font-bold">{fmt(stats.totalApproved)}</p></CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">รออนุมัติ</CardTitle>
-              <Clock className="h-4 w-4 text-accent" />
+              <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent><p className="text-2xl font-bold text-accent">{fmt(stats.totalPending)}</p></CardContent>
+            <CardContent><p className="text-2xl font-bold">{fmt(stats.totalPending)}</p></CardContent>
           </Card>
         </div>
       )}
@@ -337,8 +457,8 @@ function DashboardTab() {
       {!loading && conversions.length > 0 && (
         <div className="flex gap-3">
           <Badge variant="outline" className="gap-1"><Clock className="h-3 w-3" /> รออนุมัติ: {stats.statusCounts.pending}</Badge>
-          <Badge variant="outline" className="gap-1"><CheckCircle className="h-3 w-3 text-success" /> อนุมัติ: {stats.statusCounts.approved}</Badge>
-          <Badge variant="outline" className="gap-1"><XCircle className="h-3 w-3 text-sale" /> ปฏิเสธ: {stats.statusCounts.rejected}</Badge>
+          <Badge variant="outline" className="gap-1"><CheckCircle className="h-3 w-3" /> อนุมัติ: {stats.statusCounts.approved}</Badge>
+          <Badge variant="outline" className="gap-1"><XCircle className="h-3 w-3" /> ปฏิเสธ: {stats.statusCounts.rejected}</Badge>
         </div>
       )}
 
@@ -370,9 +490,9 @@ function DashboardTab() {
                     <TableCell className="text-sm">{c.time}</TableCell>
                     <TableCell className="text-sm font-medium">{fmt(c.sale_amount)}</TableCell>
                     <TableCell className="text-sm">
-                      {c.payout_approved > 0 && <span className="text-success font-medium">{fmt(c.payout_approved)}</span>}
+                      {c.payout_approved > 0 && <span className="text-primary font-medium">{fmt(c.payout_approved)}</span>}
                       {c.payout_pending > 0 && <span className="text-accent font-medium">{fmt(c.payout_pending)}</span>}
-                      {c.payout_rejected > 0 && <span className="text-sale font-medium">{fmt(c.payout_rejected)}</span>}
+                      {c.payout_rejected > 0 && <span className="text-destructive font-medium">{fmt(c.payout_rejected)}</span>}
                     </TableCell>
                     <TableCell className="text-sm">{c.item_count}</TableCell>
                     <TableCell>{statusBadge(c.status)}</TableCell>
@@ -383,102 +503,6 @@ function DashboardTab() {
           </Table>
         </div>
       )}
-    </div>
-  );
-}
-
-/* ========== Security Tab ========== */
-function SecurityTab() {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [newUsername, setNewUsername] = useState("");
-  const [usernamePassword, setUsernamePassword] = useState("");
-
-  const handleChangePassword = () => {
-    if (!currentPassword || !newPassword) return;
-    if (newPassword.length < 6) {
-      toast.error("รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error("รหัสผ่านใหม่ไม่ตรงกัน");
-      return;
-    }
-    if (changePassword(currentPassword, newPassword)) {
-      toast.success("เปลี่ยนรหัสผ่านเรียบร้อย!");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } else {
-      toast.error("รหัสผ่านปัจจุบันไม่ถูกต้อง");
-    }
-  };
-
-  const handleChangeUsername = () => {
-    if (!usernamePassword || !newUsername.trim()) return;
-    if (newUsername.trim().length < 3) {
-      toast.error("ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร");
-      return;
-    }
-    if (changeUsername(usernamePassword, newUsername.trim())) {
-      toast.success("เปลี่ยนชื่อผู้ใช้เรียบร้อย!");
-      setNewUsername("");
-      setUsernamePassword("");
-    } else {
-      toast.error("รหัสผ่านไม่ถูกต้อง");
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <KeyRound className="h-5 w-5" />
-            เปลี่ยนรหัสผ่าน
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>รหัสผ่านปัจจุบัน</Label>
-            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="กรอกรหัสผ่านปัจจุบัน" />
-          </div>
-          <div className="space-y-2">
-            <Label>รหัสผ่านใหม่</Label>
-            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="กรอกรหัสผ่านใหม่ (อย่างน้อย 6 ตัว)" />
-          </div>
-          <div className="space-y-2">
-            <Label>ยืนยันรหัสผ่านใหม่</Label>
-            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" />
-          </div>
-          <Button onClick={handleChangePassword} className="gap-2">
-            <Save className="h-4 w-4" />
-            บันทึกรหัสผ่านใหม่
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">เปลี่ยนชื่อผู้ใช้</CardTitle>
-          <p className="text-sm text-muted-foreground">ชื่อผู้ใช้ปัจจุบัน: <strong>{getUsername()}</strong></p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>ชื่อผู้ใช้ใหม่</Label>
-            <Input value={newUsername} onChange={(e) => setNewUsername(e.target.value)} placeholder="กรอกชื่อผู้ใช้ใหม่" />
-          </div>
-          <div className="space-y-2">
-            <Label>ยืนยันรหัสผ่าน</Label>
-            <Input type="password" value={usernamePassword} onChange={(e) => setUsernamePassword(e.target.value)} placeholder="กรอกรหัสผ่านเพื่อยืนยัน" />
-          </div>
-          <Button onClick={handleChangeUsername} className="gap-2">
-            <Save className="h-4 w-4" />
-            บันทึกชื่อผู้ใช้ใหม่
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }

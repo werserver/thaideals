@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Loader2, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { Loader2, CheckCircle2 } from "lucide-react";
 
 interface AiDescriptionProps {
   productName: string;
@@ -9,6 +7,8 @@ interface AiDescriptionProps {
   price: number;
   currency: string;
 }
+
+const EDGE_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-description`;
 
 export function AiDescription({ productName, categoryName, price, currency }: AiDescriptionProps) {
   const [description, setDescription] = useState("");
@@ -18,10 +18,17 @@ export function AiDescription({ productName, categoryName, price, currency }: Ai
   const generate = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-description", {
-        body: { productName, categoryName, price, currency },
+      const res = await fetch(EDGE_FN_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ productName, categoryName, price, currency }),
       });
-      if (error) throw error;
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
       if (data?.description) {
         setDescription(data.description);
         setHighlights(data.highlights || []);

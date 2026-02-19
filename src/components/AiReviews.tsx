@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Star, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 
 interface AiReview {
   name: string;
@@ -18,6 +17,8 @@ interface AiReviewsProps {
   currency: string;
 }
 
+const EDGE_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-reviews`;
+
 export function AiReviews({ productName, categoryName, price, currency }: AiReviewsProps) {
   const [reviews, setReviews] = useState<AiReview[]>([]);
   const [loading, setLoading] = useState(false);
@@ -26,12 +27,17 @@ export function AiReviews({ productName, categoryName, price, currency }: AiRevi
   const generateReviews = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-reviews", {
-        body: { productName, categoryName, price, currency },
+      const res = await fetch(EDGE_FN_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ productName, categoryName, price, currency }),
       });
-
-      if (error) throw error;
-
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
       if (data?.reviews) {
         setReviews(data.reviews);
         setGenerated(true);
