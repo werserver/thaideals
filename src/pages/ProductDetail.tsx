@@ -36,6 +36,15 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(!product);
   const settings = getAdminSettings();
 
+  // ✅ แก้ไข: เมื่อ slug เปลี่ยน ให้รีเซ็ตข้อมูลสินค้าและเลื่อนขึ้นบนสุด
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (id && product?.product_id !== id) {
+      setProduct(null);
+      setLoading(true);
+    }
+  }, [id]);
+
   useEffect(() => {
     if (!id || product) return;
 
