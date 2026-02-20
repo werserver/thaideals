@@ -40,6 +40,12 @@ function mapRowToProduct(row: ShopeeRow): Product {
     .map((s) => s.trim())
     .filter((s) => s.startsWith("http"));
 
+  const productUrl = row.url || "";
+  const cloakingBase = settings.cloakingBaseUrl?.trim();
+  const trackingLink = cloakingBase
+    ? `${cloakingBase}&url=${encodeURIComponent(productUrl)}&source=api_product`
+    : productUrl;
+
   return {
     product_id: String(row.id),
     product_name: row.name || "",
@@ -49,8 +55,8 @@ function mapRowToProduct(row: ShopeeRow): Product {
     product_discounted: currentPrice,
     product_discounted_percentage: discountPct,
     product_currency: settings.defaultCurrency || config.defaultCurrency,
-    product_link: row.url || "",
-    tracking_link: row.url || "",
+    product_link: productUrl,
+    tracking_link: trackingLink,
     category_id: "",
     category_name: row.category || "",
     advertiser_id: row.shopid || "",
