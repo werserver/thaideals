@@ -1,3 +1,6 @@
+import { getAdminSettings } from "@/lib/store";
+import { getPrefixedName } from "@/lib/prefix-words";
+
 // Convert product name to URL-safe slug
 export function toSlug(name: string): string {
   return encodeURIComponent(
@@ -9,9 +12,13 @@ export function toSlug(name: string): string {
   );
 }
 
-// Build product path
+// Build product path (with optional prefix)
 export function productPath(productId: string, productName: string): string {
-  return `/product/${toSlug(productName)}-${productId}.html`;
+  const settings = getAdminSettings();
+  const displayName = settings.enablePrefixWords
+    ? getPrefixedName(productId, productName)
+    : productName;
+  return `/product/${toSlug(displayName)}-${productId}.html`;
 }
 
 // Extract product ID from slug (last segment before .html)

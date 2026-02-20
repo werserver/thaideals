@@ -15,6 +15,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { getAdminSettings } from "@/lib/store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Tag } from "lucide-react";
 
 const Index = () => {
   const settings = getAdminSettings();
@@ -73,6 +74,18 @@ const Index = () => {
     return items;
   }, [data?.data, priceMin, priceMax, sort]);
 
+  // Group products by category for display
+  const categoryGroups = useMemo(() => {
+    if (!filteredProducts.length || activeKeyword) return [];
+    const groups: Record<string, typeof filteredProducts> = {};
+    for (const p of filteredProducts) {
+      const cat = p.category_name || "อื่นๆ";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(p);
+    }
+    return Object.entries(groups);
+  }, [filteredProducts, activeKeyword]);
+
   return (
     <div className="min-h-screen bg-background">
       <PriceAlertBanner />
@@ -105,7 +118,10 @@ const Index = () => {
         {/* Categories */}
         {settings.categories.length > 0 && (
           <div className="space-y-2">
-            <h2 className="text-sm font-semibold text-muted-foreground">หมวดหมู่</h2>
+            <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5">
+              <Tag className="h-4 w-4" />
+              หมวดหมู่
+            </h2>
             <div className="flex flex-wrap gap-2">
               {settings.categories.map((cat) => (
                 <Link key={cat} to={`/category/${encodeURIComponent(cat)}`}>
@@ -120,44 +136,70 @@ const Index = () => {
 
         <FilterBar onPriceRange={handlePriceRange} onSort={setSort} sort={sort} />
 
-        {/* Tabs: Grid vs Compare */}
-        <Tabs defaultValue="grid">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">
-              {activeKeyword ? `ผลการค้นหา "${activeKeyword}"` : "สินค้าแนะนำ"}
-            </h2>
-            <div className="flex items-center gap-3">
-              {data && (
-                <span className="text-sm text-muted-foreground">
-                  {filteredProducts.length} รายการ
-                </span>
-              )}
-              <TabsList className="h-9">
-                <TabsTrigger value="grid" className="text-xs">แสดงสินค้า</TabsTrigger>
-                <TabsTrigger value="compare" className="text-xs">เปรียบเทียบ</TabsTrigger>
-              </TabsList>
-            </div>
+        {/* Show by category when not searching */}
+        {!activeKeyword && categoryGroups.length > 1 ? (
+          <div className="space-y-8">
+            {categoryGroups.map(([catName, products]) => (
+              <div key={catName} className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-primary" />
+                    {catName}
+                    <span className="text-sm font-normal text-muted-foreground">({products.length})</span>
+                  </h2>
+                  <Link
+                    to={`/category/${encodeURIComponent(catName)}`}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    ดูทั้งหมด →
+                  </Link>
+                </div>
+                <ProductGrid products={products.slice(0, 10)} isLoading={false} />
+              </div>
+            ))}
           </div>
+        ) : (
+          <>
+            {/* Tabs: Grid vs Compare */}
+            <Tabs defaultValue="grid">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">
+                  {activeKeyword ? `ผลการค้นหา "${activeKeyword}"` : "สินค้าแนะนำ"}
+                </h2>
+                <div className="flex items-center gap-3">
+                  {data && (
+                    <span className="text-sm text-muted-foreground">
+                      {filteredProducts.length} รายการ
+                    </span>
+                  )}
+                  <TabsList className="h-9">
+                    <TabsTrigger value="grid" className="text-xs">แสดงสินค้า</TabsTrigger>
+                    <TabsTrigger value="compare" className="text-xs">เปรียบเทียบ</TabsTrigger>
+                  </TabsList>
+                </div>
+              </div>
 
-          <TabsContent value="grid">
-            <ProductGrid products={filteredProducts} isLoading={isLoading} />
-          </TabsContent>
-          <TabsContent value="compare">
-            {filteredProducts.length > 0 ? (
-              <CompareTable products={filteredProducts} />
-            ) : (
-              <p className="text-center py-10 text-muted-foreground">ไม่มีสินค้าให้เปรียบเทียบ</p>
+              <TabsContent value="grid">
+                <ProductGrid products={filteredProducts} isLoading={isLoading} />
+              </TabsContent>
+              <TabsContent value="compare">
+                {filteredProducts.length > 0 ? (
+                  <CompareTable products={filteredProducts} />
+                ) : (
+                  <p className="text-center py-10 text-muted-foreground">ไม่มีสินค้าให้เปรียบเทียบ</p>
+                )}
+              </TabsContent>
+            </Tabs>
+
+            {data && (
+              <PaginationBar
+                currentPage={page}
+                totalItems={data.meta.total}
+                itemsPerPage={20}
+                onPageChange={setPage}
+              />
             )}
-          </TabsContent>
-        </Tabs>
-
-        {data && (
-          <PaginationBar
-            currentPage={page}
-            totalItems={data.meta.total}
-            itemsPerPage={20}
-            onPageChange={setPage}
-          />
+          </>
         )}
       </main>
 

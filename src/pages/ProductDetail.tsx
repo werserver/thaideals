@@ -24,6 +24,7 @@ import {
 import { getAdminSettings } from "@/lib/store";
 import { addRecentlyViewed } from "@/lib/wishlist";
 import { extractIdFromSlug } from "@/lib/slug";
+import { getPrefixedName } from "@/lib/prefix-words";
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -99,6 +100,9 @@ export default function ProductDetail() {
   const reviews = getProductReviews(product.product_id);
   const hasDiscount = product.product_discounted_percentage > 0;
   const currentPrice = hasDiscount ? product.product_discounted : product.product_price;
+  const displayName = settings.enablePrefixWords
+    ? getPrefixedName(product.product_id, product.product_name)
+    : product.product_name;
 
   const images = [product.product_picture];
   if (product.product_other_pictures) {
@@ -111,13 +115,13 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title={product.product_name}
-        description={`${product.product_name} — ${formatPrice(currentPrice, product.product_currency)} | ${product.category_name}`}
+        title={displayName}
+        description={`${displayName} — ${formatPrice(currentPrice, product.product_currency)} | ${product.category_name}`}
         image={product.product_picture}
         type="product"
         url={window.location.href}
         product={{
-          name: product.product_name,
+          name: displayName,
           price: currentPrice,
           currency: product.product_currency,
           image: product.product_picture,
@@ -142,7 +146,7 @@ export default function ProductDetail() {
               <div className="overflow-hidden rounded-xl border bg-muted aspect-square group">
                 <img
                   src={images[0]}
-                  alt={product.product_name}
+                  alt={displayName}
                   className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -159,7 +163,7 @@ export default function ProductDetail() {
                   >
                     <img
                       src={img}
-                      alt={`${product.product_name} ${idx + 2}`}
+                      alt={`${displayName} ${idx + 2}`}
                       className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300"
                       loading="lazy"
                     />
@@ -178,7 +182,7 @@ export default function ProductDetail() {
                 </Badge>
               </Link>
               <h1 className="text-xl font-bold leading-tight text-foreground sm:text-2xl">
-                {product.product_name}
+                {displayName}
               </h1>
             </div>
 
@@ -234,19 +238,36 @@ export default function ProductDetail() {
             </a>
 
             {/* Share Buttons */}
-            <ShareButtons url={window.location.href} title={product.product_name} />
+            <ShareButtons url={window.location.href} title={displayName} />
           </div>
         </div>
+
+        {/* Variations */}
+        {product.variations && (
+          <div className="rounded-xl border bg-card p-6 space-y-3 animate-fade-in">
+            <h2 className="text-lg font-bold">ตัวเลือกสินค้า</h2>
+            <div className="flex flex-wrap gap-2">
+              {product.variations.split(",").map((v, i) => {
+                const trimmed = v.trim().replace(/^[^:]+:\s*/, "");
+                if (!trimmed) return null;
+                return (
+                  <Badge key={i} variant="outline" className="text-sm py-1.5 px-3">
+                    {trimmed}
+                  </Badge>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Product Details Section */}
         <div className="rounded-xl border bg-card p-6 space-y-4 animate-fade-in">
           <h2 className="text-lg font-bold">รายละเอียดสินค้า</h2>
           <div className="grid grid-cols-2 gap-3 text-sm">
             {[
-              { label: "ชื่อสินค้า", value: product.product_name },
+              { label: "ชื่อสินค้า", value: displayName },
               { label: "หมวดหมู่", value: product.category_name },
-              { label: "ร้านค้า", value: product.advertiser_id },
-              { label: "Shop ID", value: product.shop_id },
+              { label: "ร้านค้า", value: product.shop_id },
               { label: "สกุลเงิน", value: product.product_currency },
               { label: "ราคาปกติ", value: formatPrice(product.product_price, product.product_currency) },
               ...(hasDiscount
@@ -255,7 +276,6 @@ export default function ProductDetail() {
                     { label: "ส่วนลด", value: `${product.product_discounted_percentage}%` },
                   ]
                 : []),
-              { label: "Product ID", value: product.product_id },
             ].map((item) => (
               <div key={item.label} className="space-y-0.5">
                 <p className="text-muted-foreground text-xs">{item.label}</p>

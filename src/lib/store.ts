@@ -12,9 +12,14 @@ export interface AdminSettings {
   selectedAdvertisers: string[];
   enableFlashSale: boolean;
   enableAiReviews: boolean;
+  enablePrefixWords: boolean;
   defaultCurrency: string;
   csvFileName: string;
   cloakingBaseUrl: string;
+  /** Category CSV data: key = category name, value = CSV text */
+  categoryCsvMap: Record<string, string>;
+  /** Category CSV file names for display */
+  categoryCsvFileNames: Record<string, string>;
 }
 
 function getDefaults(): AdminSettings {
@@ -26,9 +31,12 @@ function getDefaults(): AdminSettings {
     selectedAdvertisers: [...config.selectedAdvertisers],
     enableFlashSale: config.enableFlashSale,
     enableAiReviews: config.enableAiReviews,
+    enablePrefixWords: false,
     defaultCurrency: config.defaultCurrency,
     csvFileName: "",
     cloakingBaseUrl: "",
+    categoryCsvMap: {},
+    categoryCsvFileNames: {},
   };
 }
 

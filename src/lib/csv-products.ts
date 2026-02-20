@@ -21,13 +21,14 @@ interface ShopeeRow {
   images: string;
   category: string;
   shopid: string;
+  variations: string;
 }
 
 let cachedProducts: Product[] | null = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 1000 * 60 * 10; // 10 minutes
 
-function mapRowToProduct(row: ShopeeRow): Product {
+function mapRowToProduct(row: ShopeeRow, categoryOverride?: string): Product {
   const settings = getAdminSettings();
   const originalPrice = parseFloat(row.original_price) || parseFloat(row.price) || 0;
   const currentPrice = parseFloat(row.price_min) || parseFloat(row.price) || 0;
@@ -58,9 +59,10 @@ function mapRowToProduct(row: ShopeeRow): Product {
     product_link: productUrl,
     tracking_link: trackingLink,
     category_id: "",
-    category_name: row.category || "",
+    category_name: categoryOverride || row.category || "",
     advertiser_id: row.shopid || "",
     shop_id: row.shop_name || "",
+    variations: row.variations || "",
   };
 }
 
@@ -69,24 +71,43 @@ async function loadCsvProducts(): Promise<Product[]> {
     return cachedProducts;
   }
 
-  // Try localStorage CSV first, then fallback to file
-  let csvText = getCsvData();
-  if (!csvText) {
-    const response = await fetch(config.csvFilePath);
-    if (!response.ok) throw new Error("Failed to load CSV file");
-    csvText = await response.text();
+  const settings = getAdminSettings();
+  const allProducts: Product[] = [];
+
+  // Load category-specific CSVs
+  for (const [catName, csvText] of Object.entries(settings.categoryCsvMap)) {
+    if (csvText) {
+      const products = await parseCsv(csvText, catName);
+      allProducts.push(...products);
+    }
   }
 
+  // Load default CSV (from localStorage or file) if no category CSVs or as fallback
+  if (allProducts.length === 0) {
+    let csvText = getCsvData();
+    if (!csvText) {
+      const response = await fetch(config.csvFilePath);
+      if (!response.ok) throw new Error("Failed to load CSV file");
+      csvText = await response.text();
+    }
+    const products = await parseCsv(csvText);
+    allProducts.push(...products);
+  }
+
+  cachedProducts = allProducts;
+  cacheTimestamp = Date.now();
+  return allProducts;
+}
+
+function parseCsv(csvText: string, categoryOverride?: string): Promise<Product[]> {
   return new Promise((resolve, reject) => {
-    Papa.parse<ShopeeRow>(csvText!, {
+    Papa.parse<ShopeeRow>(csvText, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
         const products = results.data
           .filter((row) => row.id && row.name)
-          .map(mapRowToProduct);
-        cachedProducts = products;
-        cacheTimestamp = Date.now();
+          .map((row) => mapRowToProduct(row, categoryOverride));
         resolve(products);
       },
       error: (err: Error) => reject(err),
