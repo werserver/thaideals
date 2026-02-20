@@ -6,13 +6,12 @@ import { StarRating } from "@/components/StarRating";
 import { ShareButtons } from "@/components/ShareButtons";
 import { FlashSaleCountdown } from "@/components/FlashSaleCountdown";
 import { AiReviews } from "@/components/AiReviews";
-// ❌ ลบ AiDescription ตาม Issue #1
 import { FakeCompareTable } from "@/components/FakeCompareTable";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star, ArrowLeft, ExternalLink, ShoppingCart, Shield, Truck } from "lucide-react";
+import { Star, ArrowLeft, ShoppingCart, Shield, Truck } from "lucide-react";
 import {
   fetchProducts,
   getCachedProduct,
@@ -21,6 +20,7 @@ import {
   formatPrice,
   type Product,
 } from "@/lib/api";
+import { fetchCsvProducts } from "@/lib/csv-products";
 import { getAdminSettings } from "@/lib/store";
 import { addRecentlyViewed } from "@/lib/wishlist";
 import { extractIdFromSlug } from "@/lib/slug";
@@ -33,21 +33,20 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(
     (location.state as any)?.product || null
   );
-  const [loading, setLoading] = useState(!product);
+  const [loading, setLoading] = useState(!product || (id && product.product_id !== id));
   const settings = getAdminSettings();
 
   // ✅ แก้ไข: เมื่อ slug เปลี่ยน ให้รีเซ็ตข้อมูลสินค้าและเลื่อนขึ้นบนสุด
   useEffect(() => {
     window.scrollTo(0, 0);
-    // ตรวจสอบว่า ID เปลี่ยนไปจากสินค้าปัจจุบันหรือไม่
     if (id && product?.product_id !== id) {
       setProduct(null);
       setLoading(true);
     }
-  }, [id, product?.product_id]);
+  }, [id]);
 
   useEffect(() => {
-    if (!id || product) return;
+    if (!id || (product && product.product_id === id)) return;
 
     // Try cache first
     const cached = getCachedProduct(id);
@@ -57,16 +56,20 @@ export default function ProductDetail() {
       return;
     }
 
-    // Fetch from API
+    // Fetch from correct data source
     setLoading(true);
-    fetchProducts({ limit: 100, page: 1 })
+    const fetchFn = settings.dataSource === "csv" 
+      ? () => fetchCsvProducts({ limit: 100, page: 1 })
+      : () => fetchProducts({ limit: 100, page: 1 });
+
+    fetchFn()
       .then((res) => {
         const found = res.data.find((p) => p.product_id === id);
         setProduct(found || null);
       })
       .catch(() => setProduct(null))
       .finally(() => setLoading(false));
-  }, [id, product]);
+  }, [id, product, settings.dataSource]);
 
   if (loading) {
     return (
@@ -94,7 +97,7 @@ export default function ProductDetail() {
         <SEOHead title="ไม่พบสินค้า" description="ไม่พบสินค้าที่คุณกำลังค้นหา" />
         <Header />
         <main className="container mx-auto max-w-4xl px-4 py-20 text-center">
-          <p className="text-xl font-medium text-muted-foreground">ไม่พบสินค้า</p>
+          <p className="text-xl font-medium text-muted-foreground">ไม่พบสินค้า (ID: {id})</p>
           <Link to="/" className="mt-4 inline-block text-primary hover:underline">
             กลับหน้าแรก
           </Link>
@@ -113,6 +116,7 @@ export default function ProductDetail() {
   const displayName = settings.enablePrefixWords
     ? getPrefixedName(product.product_id, product.product_name)
     : product.product_name;
+  const siteName = settings.siteName || "ThaiDeals";
 
   const images = [product.product_picture];
   if (product.product_other_pictures) {
@@ -270,7 +274,7 @@ export default function ProductDetail() {
           </div>
         )}
 
-        {/* Product Details Section - ปรับปรุงให้สวยงามขึ้น */}
+        {/* Product Details Section */}
         <div className="rounded-xl border bg-card p-6 space-y-4 animate-fade-in shadow-sm">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
@@ -349,7 +353,7 @@ export default function ProductDetail() {
       </main>
 
       <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-        © 2026 ThaiDeals — สินค้าดีลพิเศษ
+        © 2026 {siteName} — สินค้าดีลพิเศษ
       </footer>
     </div>
   );

@@ -44,13 +44,8 @@ function mapRowToProduct(row: ShopeeRow, categoryOverride?: string): Product {
 
   const productUrl = row.url || "";
   
-  // ✅ ใช้ URL Cloaking ถ้ามีการตั้งค่า token ในโหมด CSV
-  let trackingLink = productUrl;
-  if (settings.dataSource === "csv" && settings.cloakingToken && productUrl) {
-    trackingLink = buildCloakedUrl(settings.cloakingToken, productUrl);
-  } else if (settings.cloakingBaseUrl?.trim()) {
-    trackingLink = `${settings.cloakingBaseUrl.trim()}&url=${encodeURIComponent(productUrl)}&source=api_product`;
-  }
+  // ✅ ใช้ URL Cloaking ทุกจุด
+  const trackingLink = buildCloakedUrl(settings.cloakingToken, productUrl, settings.cloakingBaseUrl);
 
   return {
     product_id: String(row.id),

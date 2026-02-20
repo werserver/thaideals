@@ -16,7 +16,9 @@ export interface AdminSettings {
   defaultCurrency: string;
   csvFileName: string;
   cloakingBaseUrl: string;
-  cloakingToken?: string; // ⭐️ เพิ่มบรรทัดนี้
+  cloakingToken?: string;
+  siteName: string; // ⭐️ เพิ่มชื่อเว็บ
+  faviconUrl: string; // ⭐️ เพิ่มไอคอนเว็บ
   /** Category CSV data: key = category name, value = CSV text */
   categoryCsvMap: Record<string, string>;
   /** Category CSV file names for display */
@@ -37,6 +39,8 @@ function getDefaults(): AdminSettings {
     csvFileName: "",
     cloakingBaseUrl: "",
     cloakingToken: "",
+    siteName: "ThaiDeals", // ค่าเริ่มต้น
+    faviconUrl: "/favicon.ico", // ค่าเริ่มต้น
     categoryCsvMap: {},
     categoryCsvFileNames: {},
   };

@@ -2,9 +2,15 @@
 // For a real sitemap.xml, this would need to be generated server-side
 // This generates a basic sitemap for SEO crawlers via robots.txt reference
 
-const BASE_URL = "https://thaideals.lovable.app";
+const getBaseUrl = () => {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return "";
+};
 
 export function generateSitemapXml(productSlugs: string[] = [], categories: string[] = []): string {
+  const BASE_URL = getBaseUrl();
   const staticRoutes = [
     { loc: "/", priority: "1.0", changefreq: "daily" },
     { loc: "/wishlist", priority: "0.5", changefreq: "weekly" },

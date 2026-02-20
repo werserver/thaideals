@@ -1,4 +1,5 @@
 import { getAdminSettings } from "@/lib/store";
+import { buildCloakedUrl } from "@/lib/url-builder";
 
 export interface Product {
   product_id: string;
@@ -78,6 +79,12 @@ export async function fetchProducts(params: FetchProductsParams): Promise<Produc
   if (!res.ok) throw new Error("Failed to fetch products");
 
   const result: ProductsResponse = await res.json();
+
+  // Apply URL Cloaking to all products
+  result.data = result.data.map(p => ({
+    ...p,
+    tracking_link: buildCloakedUrl(settings.cloakingToken, p.tracking_link, settings.cloakingBaseUrl)
+  }));
 
   // Cache all fetched products
   result.data.forEach((p) => productCache.set(p.product_id, p));

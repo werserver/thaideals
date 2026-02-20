@@ -22,7 +22,7 @@ import {
 import {
   X, Plus, Save, Flame, Sparkles, DollarSign, ShoppingCart,
   Clock, CheckCircle, XCircle, LogOut, Settings, BarChart3,
-  Key, Upload, FileSpreadsheet, Database, Tag,
+  Key, Upload, FileSpreadsheet, Database, Tag, Globe, Image as ImageIcon
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchConversions, type Conversion } from "@/lib/api";
@@ -93,6 +93,8 @@ function SettingsTab() {
     saveAdminSettings(settings);
     clearCsvCache();
     toast.success("บันทึกการตั้งค่าเรียบร้อย!");
+    // Force reload to apply site name/favicon changes
+    setTimeout(() => window.location.reload(), 1000);
   };
 
   const exportConfig = () => {
@@ -235,6 +237,45 @@ function SettingsTab() {
         </Button>
       </div>
 
+      {/* Site Identity */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            ข้อมูลเว็บไซต์
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="siteName">ชื่อเว็บไซต์</Label>
+              <Input
+                id="siteName"
+                value={settings.siteName}
+                onChange={(e) => update({ siteName: e.target.value })}
+                placeholder="ตัวอย่าง: ThaiDeals"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="faviconUrl">URL ไอคอนเว็บ (Favicon)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="faviconUrl"
+                  value={settings.faviconUrl}
+                  onChange={(e) => update({ faviconUrl: e.target.value })}
+                  placeholder="ตัวอย่าง: /favicon.ico หรือ https://..."
+                />
+                {settings.faviconUrl && (
+                  <div className="flex h-10 w-10 items-center justify-center rounded border bg-muted p-1">
+                    <img src={settings.faviconUrl} alt="Favicon Preview" className="h-full w-full object-contain" onError={(e) => (e.currentTarget.src = "/favicon.ico")} />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Data Source */}
       <Card className="border-primary/30 bg-primary/5">
         <CardHeader>
@@ -286,122 +327,111 @@ function SettingsTab() {
                 )}
               </div>
               <input
-                ref={fileInputRef}
                 type="file"
-                accept=".csv"
+                ref={fileInputRef}
                 className="hidden"
+                accept=".csv"
                 onChange={handleCsvUpload}
               />
-              <div className="space-y-2 mt-3">
-                <Label className="text-sm font-medium">URL Cloaking Base URL</Label>
+              
+              <div className="space-y-2 pt-2 border-t">
+                <Label className="text-xs text-muted-foreground">URL Cloaking Base URL</Label>
                 <Input
-                  placeholder="https://goeco.mobi/?token=QlpXZyCqMylKUjZiYchwB"
                   value={settings.cloakingBaseUrl}
                   onChange={(e) => update({ cloakingBaseUrl: e.target.value })}
+                  placeholder="https://goeco.mobi/?token=QlpXZyCqMylKUjZiYchwB"
+                  className="h-8 text-xs"
                 />
-                <p className="text-xs text-muted-foreground">
-                  ระบบจะสร้างลิงก์เป็น: base_url&url=encoded_product_url&source=api_product
-                </p>
+                <p className="text-[10px] text-muted-foreground">ระบบจะสร้างลิงก์เป็น: base_url&url=encoded_product_url&source=api_product</p>
               </div>
 
-              {/* URL Cloaking for CSV Mode */}
-              <div className="pt-3 border-t space-y-2">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <Key className="h-4 w-4 text-primary" />
-                  URL Cloaking Token (ตัวเลือก)
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Key className="h-3 w-3" /> URL Cloaking Token (ตัวเลือก)
                 </Label>
                 <Input
-                  placeholder="กรอก token (ตัวอย่าง: Q1pXZyCqMylKUjZiYchwB)"
                   value={settings.cloakingToken || ""}
                   onChange={(e) => update({ cloakingToken: e.target.value })}
+                  placeholder="กรอก token (ตัวอย่าง: Q1pXZyCqMylKUjZiYchwB)"
+                  className="h-8 text-xs"
                 />
-                <p className="text-xs text-muted-foreground">
-                  URL ที่แสดงผล: <span className="font-mono text-primary">https://goeco.mobi/?token={settings.cloakingToken || "YOUR_TOKEN"}&url=...&source=api_product</span>
-                </p>
+                <p className="text-[10px] text-muted-foreground">URL ที่แสดงผล: https://goeco.mobi/?token=YOUR_TOKEN&url=...&source=api_product</p>
               </div>
+            </div>
+          )}
+
+          {/* API Token */}
+          {settings.dataSource === "api" && (
+            <div className="space-y-2">
+              <Label>API Token (Passio/Ecomobi)</Label>
+              <Input
+                value={settings.apiToken}
+                onChange={(e) => update({ apiToken: e.target.value })}
+                placeholder="กรอก API Token ของคุณ"
+              />
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* API Token */}
-      {settings.dataSource === "api" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Key className="h-5 w-5" />
-              API Token (Passio/Ecomobi)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Input
-              type="password"
-              placeholder="กรอก API Token ที่นี่"
-              value={settings.apiToken}
-              onChange={(e) => update({ apiToken: e.target.value })}
-            />
-            <p className="text-xs text-muted-foreground">
-              Token จะถูกเก็บใน localStorage ของเบราว์เซอร์นี้
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Categories with CSV upload per category */}
+      {/* Categories */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Tag className="h-5 w-5" />
+            <Tag className="h-5 w-5 text-primary" />
             หมวดหมู่สินค้า
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Input
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder="เพิ่มหมวดหมู่..."
+              onKeyDown={(e) => e.key === "Enter" && addCategory()}
+            />
+            <Button onClick={addCategory} size="icon"><Plus className="h-4 w-4" /></Button>
+          </div>
           <div className="space-y-2">
             {settings.categories.map((cat) => (
-              <div key={cat} className="flex items-center gap-2 rounded-lg border p-3">
-                <Badge variant="secondary" className="text-sm">{cat}</Badge>
-                <div className="flex-1 text-xs text-muted-foreground">
-                  {settings.categoryCsvFileNames?.[cat]
-                    ? `📄 ${settings.categoryCsvFileNames[cat]}`
-                    : settings.dataSource === "csv" ? "ยังไม่มี CSV" : ""}
+              <div key={cat} className="flex items-center justify-between rounded-lg border p-3 bg-card">
+                <div className="flex flex-col">
+                  <span className="font-medium">{cat}</span>
+                  {settings.dataSource === "csv" && (
+                    <span className="text-xs text-muted-foreground">
+                      {settings.categoryCsvFileNames[cat] ? `📄 ${settings.categoryCsvFileNames[cat]}` : "ยังไม่มี CSV"}
+                    </span>
+                  )}
                 </div>
-                {settings.dataSource === "csv" && (
+                <div className="flex items-center gap-2">
+                  {settings.dataSource === "csv" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5 text-xs"
+                      onClick={() => triggerCategoryUpload(cat)}
+                    >
+                      <Upload className="h-3 w-3" />
+                      แนบ CSV
+                    </Button>
+                  )}
                   <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1 text-xs"
-                    onClick={() => triggerCategoryUpload(cat)}
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive"
+                    onClick={() => removeCategory(cat)}
                   >
-                    <Upload className="h-3 w-3" />
-                    แนบ CSV
+                    <X className="h-4 w-4" />
                   </Button>
-                )}
-                <button
-                  onClick={() => removeCategory(cat)}
-                  className="rounded-full p-1 hover:bg-destructive/20"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                </div>
               </div>
             ))}
           </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="เพิ่มหมวดหมู่..."
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addCategory()}
-              className="max-w-xs"
-            />
-            <Button size="sm" variant="outline" onClick={addCategory}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
           <input
-            ref={categoryFileInputRef}
             type="file"
-            accept=".csv"
+            ref={categoryFileInputRef}
             className="hidden"
+            accept=".csv"
             onChange={handleCategoryCsvUpload}
           />
         </CardContent>
@@ -409,73 +439,69 @@ function SettingsTab() {
 
       {/* Keywords */}
       <Card>
-        <CardHeader><CardTitle className="text-lg">คำค้นหลัก</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {settings.keywords.map((kw) => (
-              <Badge key={kw} variant="secondary" className="gap-1 pr-1">
-                {kw}
-                <button
-                  onClick={() => removeKeyword(kw)}
-                  className="ml-1 rounded-full p-0.5 hover:bg-destructive/20"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            คำค้นหาแนะนำ
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Input
-              placeholder="เพิ่มคำค้น..."
               value={newKeyword}
               onChange={(e) => setNewKeyword(e.target.value)}
+              placeholder="เพิ่มคำค้น..."
               onKeyDown={(e) => e.key === "Enter" && addKeyword()}
-              className="max-w-xs"
             />
-            <Button size="sm" variant="outline" onClick={addKeyword}>
-              <Plus className="h-4 w-4" />
-            </Button>
+            <Button onClick={addKeyword} size="icon"><Plus className="h-4 w-4" /></Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {settings.keywords.map((kw) => (
+              <Badge key={kw} variant="secondary" className="gap-1 py-1.5 px-3">
+                {kw}
+                <X
+                  className="h-3 w-3 cursor-pointer hover:text-destructive"
+                  onClick={() => removeKeyword(kw)}
+                />
+              </Badge>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Feature toggles */}
+      {/* Features */}
       <Card>
-        <CardHeader><CardTitle className="text-lg">ออฟชั่นเสริม</CardTitle></CardHeader>
-        <CardContent className="space-y-5">
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-destructive/10 p-2"><Flame className="h-5 w-5 text-destructive" /></div>
-              <div>
-                <Label className="font-medium">Flash Sale Countdown</Label>
-                <p className="text-xs text-muted-foreground">แสดงเวลานับถอยหลังเร่งการซื้อ</p>
-              </div>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Flame className="h-5 w-5 text-primary" />
+            ฟีเจอร์เสริม
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Flash Sale Countdown</Label>
+              <p className="text-xs text-muted-foreground">แสดงเวลานับถอยหลังสำหรับสินค้าลดราคา</p>
             </div>
             <Switch
               checked={settings.enableFlashSale}
               onCheckedChange={(v) => update({ enableFlashSale: v })}
             />
           </div>
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-primary/10 p-2"><Sparkles className="h-5 w-5 text-primary" /></div>
-              <div>
-                <Label className="font-medium">AI Reviews (Gemini Flash)</Label>
-                <p className="text-xs text-muted-foreground">ใช้ AI สร้างรีวิวสินค้าอัตโนมัติ</p>
-              </div>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>AI Reviews</Label>
+              <p className="text-xs text-muted-foreground">แสดงรีวิวที่สร้างโดย AI เพื่อความน่าเชื่อถือ</p>
             </div>
             <Switch
               checked={settings.enableAiReviews}
               onCheckedChange={(v) => update({ enableAiReviews: v })}
             />
           </div>
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-accent/30 p-2"><Tag className="h-5 w-5 text-accent-foreground" /></div>
-              <div>
-                <Label className="font-medium">คำนำหน้าสินค้า (Prefix Words)</Label>
-                <p className="text-xs text-muted-foreground">สุ่มคำเช่น "ถูกที่สุด", "ลดราคา" นำหน้าชื่อสินค้าและ URL</p>
-              </div>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Prefix Words</Label>
+              <p className="text-xs text-muted-foreground">เพิ่มคำนำหน้าชื่อสินค้า (เช่น [SALE], [HOT])</p>
             </div>
             <Switch
               checked={settings.enablePrefixWords}
@@ -485,10 +511,9 @@ function SettingsTab() {
         </CardContent>
       </Card>
 
-      {/* Save Button */}
-      <div className="sticky bottom-4 flex justify-end">
-        <Button size="lg" className="gap-2 shadow-lg" onClick={handleSave}>
-          <Save className="h-5 w-5" />
+      <div className="flex justify-end pt-4">
+        <Button onClick={handleSave} className="gap-2 px-8 shadow-lg shadow-primary/20">
+          <Save className="h-4 w-4" />
           บันทึกการตั้งค่า
         </Button>
       </div>

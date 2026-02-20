@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { getAdminSettings } from "@/lib/store";
 
 interface SEOHeadProps {
   title?: string;
@@ -20,7 +21,7 @@ interface SEOHeadProps {
 }
 
 export function SEOHead({
-  title = "ThaiDeals — สินค้าดีลพิเศษ",
+  title,
   description = "รวมสินค้าลดราคา โปรโมชั่นสุดคุ้ม จากร้านค้าชั้นนำ",
   image,
   url,
@@ -29,7 +30,14 @@ export function SEOHead({
   breadcrumbs,
   product,
 }: SEOHeadProps) {
-  const fullTitle = title.includes("ThaiDeals") ? title : `${title} | ThaiDeals`;
+  const settings = getAdminSettings();
+  const siteName = settings.siteName || "ThaiDeals";
+  const favicon = settings.faviconUrl || "/favicon.ico";
+  
+  const defaultTitle = `${siteName} — สินค้าดีลพิเศษ`;
+  const currentTitle = title || defaultTitle;
+  const fullTitle = currentTitle.includes(siteName) ? currentTitle : `${currentTitle} | ${siteName}`;
+  
   const pageUrl = url || (typeof window !== "undefined" ? window.location.href : "");
   const canonicalUrl = canonical || pageUrl;
 
@@ -61,7 +69,7 @@ export function SEOHead({
     jsonLdItems.push({
       "@context": "https://schema.org",
       "@type": "WebSite",
-      name: "ThaiDeals",
+      name: siteName,
       description,
       url: pageUrl,
       potentialAction: {
@@ -90,6 +98,7 @@ export function SEOHead({
       <title>{fullTitle}</title>
       <meta name="description" content={description.slice(0, 160)} />
       <link rel="canonical" href={canonicalUrl} />
+      <link rel="icon" href={favicon} />
 
       {/* Open Graph */}
       <meta property="og:title" content={fullTitle} />
@@ -97,7 +106,7 @@ export function SEOHead({
       <meta property="og:type" content={type} />
       {image && <meta property="og:image" content={image} />}
       <meta property="og:url" content={pageUrl} />
-      <meta property="og:site_name" content="ThaiDeals" />
+      <meta property="og:site_name" content={siteName} />
       <meta property="og:locale" content="th_TH" />
 
       {/* Twitter */}
