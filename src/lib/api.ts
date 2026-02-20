@@ -15,6 +15,7 @@ export interface Product {
   category_name: string;
   advertiser_id: string;
   shop_id: string;
+  variations?: string;
 }
 
 export interface ProductsResponse {

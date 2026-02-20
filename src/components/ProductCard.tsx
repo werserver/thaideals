@@ -4,6 +4,8 @@ import { WishlistButton } from "./WishlistButton";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { productPath } from "@/lib/slug";
+import { getAdminSettings } from "@/lib/store";
+import { getPrefixedName } from "@/lib/prefix-words";
 
 interface ProductCardProps {
   product: Product;
@@ -12,6 +14,10 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { rating, reviewCount } = getProductRating(product.product_id);
   const hasDiscount = product.product_discounted_percentage > 0;
+  const settings = getAdminSettings();
+  const displayName = settings.enablePrefixWords
+    ? getPrefixedName(product.product_id, product.product_name)
+    : product.product_name;
 
   return (
     <div className="group overflow-hidden rounded-xl border bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 animate-fade-in">
@@ -19,7 +25,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="relative aspect-square overflow-hidden bg-muted">
           <img
             src={product.product_picture}
-            alt={product.product_name}
+            alt={displayName}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
@@ -35,7 +41,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <div className="p-3 space-y-2">
           <h3 className="line-clamp-2 text-sm font-medium leading-snug text-card-foreground hover:text-primary transition-colors">
-            {product.product_name}
+            {displayName}
           </h3>
 
           <StarRating rating={rating} count={reviewCount} />

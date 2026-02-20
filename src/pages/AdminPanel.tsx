@@ -22,7 +22,7 @@ import {
 import {
   X, Plus, Save, Flame, Sparkles, DollarSign, ShoppingCart,
   Clock, CheckCircle, XCircle, LogOut, Settings, BarChart3,
-  Key, Upload, FileSpreadsheet, Database,
+  Key, Upload, FileSpreadsheet, Database, Tag,
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchConversions, type Conversion } from "@/lib/api";
@@ -82,6 +82,8 @@ function SettingsTab() {
   const [newCategory, setNewCategory] = useState("");
   const [newKeyword, setNewKeyword] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const categoryFileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingCategory, setUploadingCategory] = useState("");
 
   const update = (partial: Partial<AdminSettings>) => {
     setSettings((prev) => ({ ...prev, ...partial }));
@@ -101,7 +103,15 @@ function SettingsTab() {
   };
 
   const removeCategory = (cat: string) => {
-    update({ categories: settings.categories.filter((c) => c !== cat) });
+    const newMap = { ...settings.categoryCsvMap };
+    const newFileNames = { ...settings.categoryCsvFileNames };
+    delete newMap[cat];
+    delete newFileNames[cat];
+    update({
+      categories: settings.categories.filter((c) => c !== cat),
+      categoryCsvMap: newMap,
+      categoryCsvFileNames: newFileNames,
+    });
   };
 
   const addKeyword = () => {
@@ -131,8 +141,34 @@ function SettingsTab() {
       toast.success(`อัปโหลดไฟล์ ${file.name} เรียบร้อย!`);
     };
     reader.readAsText(file);
-    // Reset file input
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleCategoryCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadingCategory) return;
+    if (!file.name.endsWith(".csv")) {
+      toast.error("กรุณาเลือกไฟล์ .csv เท่านั้น");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      clearCsvCache();
+      update({
+        categoryCsvMap: { ...settings.categoryCsvMap, [uploadingCategory]: text },
+        categoryCsvFileNames: { ...settings.categoryCsvFileNames, [uploadingCategory]: file.name },
+      });
+      toast.success(`อัปโหลด CSV สำหรับ "${uploadingCategory}" เรียบร้อย!`);
+      setUploadingCategory("");
+    };
+    reader.readAsText(file);
+    if (categoryFileInputRef.current) categoryFileInputRef.current.value = "";
+  };
+
+  const triggerCategoryUpload = (catName: string) => {
+    setUploadingCategory(catName);
+    setTimeout(() => categoryFileInputRef.current?.click(), 50);
   };
 
   return (
@@ -170,6 +206,7 @@ function SettingsTab() {
           {/* CSV Upload */}
           {settings.dataSource === "csv" && (
             <div className="space-y-3 rounded-lg border bg-card p-4">
+              <p className="text-sm font-medium">CSV ทั่วไป (ใช้เมื่อไม่มี CSV ตามหมวดหมู่)</p>
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
@@ -193,9 +230,6 @@ function SettingsTab() {
                 className="hidden"
                 onChange={handleCsvUpload}
               />
-              <p className="text-xs text-muted-foreground">
-                รองรับ Shopee CSV format (id, name, price, image, url, category ฯลฯ)
-              </p>
               <div className="space-y-2 mt-3">
                 <Label className="text-sm font-medium">URL Cloaking Base URL</Label>
                 <Input
@@ -235,21 +269,42 @@ function SettingsTab() {
         </Card>
       )}
 
-      {/* Categories */}
+      {/* Categories with CSV upload per category */}
       <Card>
-        <CardHeader><CardTitle className="text-lg">หมวดหมู่สินค้า</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Tag className="h-5 w-5" />
+            หมวดหมู่สินค้า
+          </CardTitle>
+        </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-2">
             {settings.categories.map((cat) => (
-              <Badge key={cat} variant="secondary" className="gap-1 pr-1">
-                {cat}
+              <div key={cat} className="flex items-center gap-2 rounded-lg border p-3">
+                <Badge variant="secondary" className="text-sm">{cat}</Badge>
+                <div className="flex-1 text-xs text-muted-foreground">
+                  {settings.categoryCsvFileNames?.[cat]
+                    ? `📄 ${settings.categoryCsvFileNames[cat]}`
+                    : settings.dataSource === "csv" ? "ยังไม่มี CSV" : ""}
+                </div>
+                {settings.dataSource === "csv" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    onClick={() => triggerCategoryUpload(cat)}
+                  >
+                    <Upload className="h-3 w-3" />
+                    แนบ CSV
+                  </Button>
+                )}
                 <button
                   onClick={() => removeCategory(cat)}
-                  className="ml-1 rounded-full p-0.5 hover:bg-destructive/20"
+                  className="rounded-full p-1 hover:bg-destructive/20"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4" />
                 </button>
-              </Badge>
+              </div>
             ))}
           </div>
           <div className="flex gap-2">
@@ -264,6 +319,13 @@ function SettingsTab() {
               <Plus className="h-4 w-4" />
             </Button>
           </div>
+          <input
+            ref={categoryFileInputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={handleCategoryCsvUpload}
+          />
         </CardContent>
       </Card>
 
@@ -327,6 +389,19 @@ function SettingsTab() {
             <Switch
               checked={settings.enableAiReviews}
               onCheckedChange={(v) => update({ enableAiReviews: v })}
+            />
+          </div>
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-accent/30 p-2"><Tag className="h-5 w-5 text-accent-foreground" /></div>
+              <div>
+                <Label className="font-medium">คำนำหน้าสินค้า (Prefix Words)</Label>
+                <p className="text-xs text-muted-foreground">สุ่มคำเช่น "ถูกที่สุด", "ลดราคา" นำหน้าชื่อสินค้าและ URL</p>
+              </div>
+            </div>
+            <Switch
+              checked={settings.enablePrefixWords}
+              onCheckedChange={(v) => update({ enablePrefixWords: v })}
             />
           </div>
         </CardContent>
@@ -449,70 +524,52 @@ function DashboardTab() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">รายได้อนุมัติ</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">อนุมัติแล้ว</CardTitle>
+              <CheckCircle className="h-4 w-4 text-success" />
             </CardHeader>
-            <CardContent><p className="text-2xl font-bold">{fmt(stats.totalApproved)}</p></CardContent>
+            <CardContent><p className="text-2xl font-bold text-success">{fmt(stats.totalApproved)}</p></CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">รออนุมัติ</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">รอดำเนินการ</CardTitle>
+              <Clock className="h-4 w-4 text-accent" />
             </CardHeader>
-            <CardContent><p className="text-2xl font-bold">{fmt(stats.totalPending)}</p></CardContent>
+            <CardContent><p className="text-2xl font-bold text-accent">{fmt(stats.totalPending)}</p></CardContent>
           </Card>
         </div>
       )}
 
-      {/* Status badges */}
+      {/* Conversion Table */}
       {!loading && conversions.length > 0 && (
-        <div className="flex gap-3">
-          <Badge variant="outline" className="gap-1"><Clock className="h-3 w-3" /> รออนุมัติ: {stats.statusCounts.pending}</Badge>
-          <Badge variant="outline" className="gap-1"><CheckCircle className="h-3 w-3" /> อนุมัติ: {stats.statusCounts.approved}</Badge>
-          <Badge variant="outline" className="gap-1"><XCircle className="h-3 w-3" /> ปฏิเสธ: {stats.statusCounts.rejected}</Badge>
-        </div>
-      )}
-
-      {/* Table */}
-      {!loading && (
-        <div className="rounded-xl border bg-card overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>ร้านค้า</TableHead>
-                <TableHead>วันที่</TableHead>
-                <TableHead>ยอดขาย</TableHead>
-                <TableHead>รายได้</TableHead>
-                <TableHead>จำนวน</TableHead>
-                <TableHead>สถานะ</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {conversions.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">ไม่พบข้อมูล Conversion</TableCell>
-                </TableRow>
-              ) : (
-                conversions.map((c) => (
-                  <TableRow key={c._id}>
-                    <TableCell className="text-xs font-mono">{c.adv_order_id}</TableCell>
-                    <TableCell className="text-sm">{c.advertiser}</TableCell>
-                    <TableCell className="text-sm">{c.time}</TableCell>
-                    <TableCell className="text-sm font-medium">{fmt(c.sale_amount)}</TableCell>
-                    <TableCell className="text-sm">
-                      {c.payout_approved > 0 && <span className="text-primary font-medium">{fmt(c.payout_approved)}</span>}
-                      {c.payout_pending > 0 && <span className="text-accent font-medium">{fmt(c.payout_pending)}</span>}
-                      {c.payout_rejected > 0 && <span className="text-destructive font-medium">{fmt(c.payout_rejected)}</span>}
-                    </TableCell>
-                    <TableCell className="text-sm">{c.item_count}</TableCell>
-                    <TableCell>{statusBadge(c.status)}</TableCell>
+        <Card>
+          <CardHeader><CardTitle className="text-lg">รายการ Conversions</CardTitle></CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>วันที่</TableHead>
+                    <TableHead>Advertiser</TableHead>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>ยอดขาย</TableHead>
+                    <TableHead>สถานะ</TableHead>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                </TableHeader>
+                <TableBody>
+                  {conversions.map((c) => (
+                    <TableRow key={c._id}>
+                      <TableCell className="text-xs">{new Date(c.time).toLocaleDateString("th-TH")}</TableCell>
+                      <TableCell className="text-xs">{c.advertiser}</TableCell>
+                      <TableCell className="text-xs font-mono">{c.adv_order_id}</TableCell>
+                      <TableCell className="text-xs">{fmt(c.sale_amount)}</TableCell>
+                      <TableCell>{statusBadge(c.status)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
