@@ -39,11 +39,12 @@ export default function ProductDetail() {
   // ✅ แก้ไข: เมื่อ slug เปลี่ยน ให้รีเซ็ตข้อมูลสินค้าและเลื่อนขึ้นบนสุด
   useEffect(() => {
     window.scrollTo(0, 0);
+    // ตรวจสอบว่า ID เปลี่ยนไปจากสินค้าปัจจุบันหรือไม่
     if (id && product?.product_id !== id) {
       setProduct(null);
       setLoading(true);
     }
-  }, [id]);
+  }, [id, product?.product_id]);
 
   useEffect(() => {
     if (!id || product) return;
