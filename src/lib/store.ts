@@ -14,6 +14,7 @@ export interface AdminSettings {
   enableAiReviews: boolean;
   defaultCurrency: string;
   csvFileName: string;
+  cloakingBaseUrl: string;
 }
 
 function getDefaults(): AdminSettings {
@@ -27,6 +28,7 @@ function getDefaults(): AdminSettings {
     enableAiReviews: config.enableAiReviews,
     defaultCurrency: config.defaultCurrency,
     csvFileName: "",
+    cloakingBaseUrl: "",
   };
 }
 

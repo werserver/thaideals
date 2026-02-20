@@ -6,7 +6,7 @@ import { StarRating } from "@/components/StarRating";
 import { ShareButtons } from "@/components/ShareButtons";
 import { FlashSaleCountdown } from "@/components/FlashSaleCountdown";
 import { AiReviews } from "@/components/AiReviews";
-import { AiDescription } from "@/components/AiDescription";
+
 import { FakeCompareTable } from "@/components/FakeCompareTable";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import { Badge } from "@/components/ui/badge";
@@ -238,17 +238,6 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* Product Description */}
-        <div className="rounded-xl border bg-card p-6 space-y-4 animate-fade-in">
-          <h2 className="text-lg font-bold">คำอธิบายสินค้า</h2>
-          <AiDescription
-            productName={product.product_name}
-            categoryName={product.category_name}
-            price={currentPrice}
-            currency={product.product_currency}
-          />
-        </div>
-
         {/* Product Details Section */}
         <div className="rounded-xl border bg-card p-6 space-y-4 animate-fade-in">
           <h2 className="text-lg font-bold">รายละเอียดสินค้า</h2>
@@ -274,14 +263,6 @@ export default function ProductDetail() {
               </div>
             ))}
           </div>
-          <a
-            href={product.product_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block text-xs text-primary hover:underline"
-          >
-            ดูสินค้าบนร้านค้าต้นทาง →
-          </a>
         </div>
 
         {/* Fake Compare Table */}

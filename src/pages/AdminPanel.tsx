@@ -196,6 +196,17 @@ function SettingsTab() {
               <p className="text-xs text-muted-foreground">
                 รองรับ Shopee CSV format (id, name, price, image, url, category ฯลฯ)
               </p>
+              <div className="space-y-2 mt-3">
+                <Label className="text-sm font-medium">URL Cloaking Base URL</Label>
+                <Input
+                  placeholder="https://goeco.mobi/?token=QlpXZyCqMylKUjZiYchwB"
+                  value={settings.cloakingBaseUrl}
+                  onChange={(e) => update({ cloakingBaseUrl: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  ระบบจะสร้างลิงก์เป็น: base_url&url=encoded_product_url&source=api_product
+                </p>
+              </div>
             </div>
           )}
         </CardContent>

@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts, type Product } from "@/lib/api";
+import { fetchCsvProducts } from "@/lib/csv-products";
+import { getAdminSettings } from "@/lib/store";
 import { ProductCard } from "./ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -8,9 +10,13 @@ interface RelatedProductsProps {
 }
 
 export function RelatedProducts({ product }: RelatedProductsProps) {
+  const settings = getAdminSettings();
   const { data, isLoading } = useQuery({
-    queryKey: ["related", product.category_name],
-    queryFn: () => fetchProducts({ keyword: product.category_name, limit: 10, page: 1 }),
+    queryKey: ["related", product.product_id, settings.dataSource],
+    queryFn: () =>
+      settings.dataSource === "csv"
+        ? fetchCsvProducts({ limit: 20, page: 1 })
+        : fetchProducts({ limit: 20, page: 1 }),
     staleTime: 1000 * 60 * 5,
   });
 
