@@ -11,21 +11,27 @@ interface RelatedProductsProps {
 
 export function RelatedProducts({ product }: RelatedProductsProps) {
   const settings = getAdminSettings();
+  
+  // ✅ แก้ไข: ดึงสินค้าทั้งหมดแล้วสุ่มมาแสดงตาม Issue #1
   const { data, isLoading } = useQuery({
-    queryKey: ["related", product.product_id, settings.dataSource],
+    queryKey: ["all-products-for-related", settings.dataSource],
     queryFn: () =>
       settings.dataSource === "csv"
-        ? fetchCsvProducts({ limit: 20, page: 1 })
-        : fetchProducts({ limit: 20, page: 1 }),
-    staleTime: 1000 * 60 * 5,
+        ? fetchCsvProducts({ limit: 100, page: 1 })
+        : fetchProducts({ limit: 100, page: 1 }),
+    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
   });
 
-  const related = data?.data.filter((p) => p.product_id !== product.product_id).slice(0, 5) || [];
+  // ✅ ดึงสินค้าอื่นๆ มาแสดง (ไม่ใช่สินค้าเดิม) และสุ่ม 5 ชิ้น
+  const related = data?.data
+    .filter((p) => p.product_id !== product.product_id)
+    .sort(() => Math.random() - 0.5) // สุ่มสินค้า
+    .slice(0, 5) || [];
 
   if (isLoading) {
     return (
       <div className="space-y-4 animate-fade-in">
-        <h2 className="text-lg font-bold">สินค้าที่เกี่ยวข้อง</h2>
+        <h2 className="text-lg font-bold">สินค้าที่คุณอาจสนใจ</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="space-y-3 rounded-xl border bg-card p-3">
@@ -43,7 +49,7 @@ export function RelatedProducts({ product }: RelatedProductsProps) {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <h2 className="text-lg font-bold">สินค้าที่เกี่ยวข้อง</h2>
+      <h2 className="text-lg font-bold">สินค้าที่คุณอาจสนใจ</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         {related.map((p) => (
           <ProductCard key={p.product_id} product={p} />

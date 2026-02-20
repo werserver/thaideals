@@ -16,6 +16,7 @@ export interface AdminSettings {
   defaultCurrency: string;
   csvFileName: string;
   cloakingBaseUrl: string;
+  cloakingToken?: string; // ⭐️ เพิ่มบรรทัดนี้
   /** Category CSV data: key = category name, value = CSV text */
   categoryCsvMap: Record<string, string>;
   /** Category CSV file names for display */
@@ -35,6 +36,7 @@ function getDefaults(): AdminSettings {
     defaultCurrency: config.defaultCurrency,
     csvFileName: "",
     cloakingBaseUrl: "",
+    cloakingToken: "",
     categoryCsvMap: {},
     categoryCsvFileNames: {},
   };

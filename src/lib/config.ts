@@ -28,14 +28,14 @@ export interface SiteConfig {
 
 const config: SiteConfig = {
   siteName: "ThaiDeals",
-  dataSource: "api",
+  dataSource: "csv", // เปลี่ยนเป็น csv เป็นค่าเริ่มต้นตามความต้องการของผู้ใช้
   csvFilePath: "/data/products.csv",
   categories: [
-    "Electronics",
-    "Fashion",
-    "Home & Living",
-    "Health & Beauty",
-    "Sports & Outdoors",
+    "สินค้าแนะนำ",
+    "ดีลเด็ด",
+    "ของใช้ในบ้าน",
+    "แฟชั่น",
+    "อิเล็กทรอนิกส์",
   ],
   keywords: [
     "โปรโมชั่น",
@@ -46,7 +46,7 @@ const config: SiteConfig = {
   ],
   selectedAdvertisers: [],
   enableFlashSale: true,
-  enableAiReviews: true,
+  enableAiReviews: false, // ปิดไว้ก่อนเพื่อลดการเรียก API
   defaultCurrency: "THB",
 };
 

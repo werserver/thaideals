@@ -2,6 +2,7 @@ import Papa from "papaparse";
 import type { Product, ProductsResponse } from "@/lib/api";
 import { getAdminSettings, getCsvData } from "@/lib/store";
 import config from "@/lib/config";
+import { buildCloakedUrl } from "./url-builder";
 
 interface ShopeeRow {
   id: string;
@@ -42,10 +43,14 @@ function mapRowToProduct(row: ShopeeRow, categoryOverride?: string): Product {
     .filter((s) => s.startsWith("http"));
 
   const productUrl = row.url || "";
-  const cloakingBase = settings.cloakingBaseUrl?.trim();
-  const trackingLink = cloakingBase
-    ? `${cloakingBase}&url=${encodeURIComponent(productUrl)}&source=api_product`
-    : productUrl;
+  
+  // ✅ ใช้ URL Cloaking ถ้ามีการตั้งค่า token ในโหมด CSV
+  let trackingLink = productUrl;
+  if (settings.dataSource === "csv" && settings.cloakingToken && productUrl) {
+    trackingLink = buildCloakedUrl(settings.cloakingToken, productUrl);
+  } else if (settings.cloakingBaseUrl?.trim()) {
+    trackingLink = `${settings.cloakingBaseUrl.trim()}&url=${encodeURIComponent(productUrl)}&source=api_product`;
+  }
 
   return {
     product_id: String(row.id),

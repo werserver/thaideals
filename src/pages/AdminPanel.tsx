@@ -39,10 +39,10 @@ export default function AdminPanel() {
       <SEOHead title="Admin Panel" description="จัดการระบบและดูสถิติ" />
       <Header />
       <main className="container mx-auto max-w-5xl px-4 py-6 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="text-2xl font-bold">🛠 Admin Panel</h1>
           <Button
-            variant="outline"
+            variant="destructive"
             size="sm"
             className="gap-1.5"
             onClick={() => { logoutAdmin(); setAuthed(false); }}
@@ -93,6 +93,33 @@ function SettingsTab() {
     saveAdminSettings(settings);
     clearCsvCache();
     toast.success("บันทึกการตั้งค่าเรียบร้อย!");
+  };
+
+  const exportConfig = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settings));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "site-config.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    toast.success("ส่งออกการตั้งค่าเรียบร้อย!");
+  };
+
+  const importConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const imported = JSON.parse(ev.target?.result as string);
+        setSettings(imported);
+        toast.success("นำเข้าการตั้งค่าเรียบร้อย! อย่าลืมกดบันทึก");
+      } catch (err) {
+        toast.error("ไฟล์ไม่ถูกต้อง");
+      }
+    };
+    reader.readAsText(file);
   };
 
   const addCategory = () => {
@@ -173,6 +200,41 @@ function SettingsTab() {
 
   return (
     <div className="space-y-6">
+      {/* Quick Actions */}
+      <div className="flex flex-wrap items-center gap-2 bg-muted/30 p-3 rounded-xl border border-dashed">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-9"
+            onClick={exportConfig}
+          >
+            <Upload className="h-4 w-4 rotate-180" />
+            Export Config
+          </Button>
+          <label className="cursor-pointer">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-9 pointer-events-none"
+            >
+              <Upload className="h-4 w-4" />
+              Import Config
+            </Button>
+            <input type="file" accept=".json" className="hidden" onChange={importConfig} />
+          </label>
+        </div>
+        <Button
+          variant="default"
+          size="sm"
+          className="gap-1.5 h-9 ml-auto shadow-md"
+          onClick={handleSave}
+        >
+          <Save className="h-4 w-4" />
+          บันทึกการตั้งค่าทั้งหมด
+        </Button>
+      </div>
+
       {/* Data Source */}
       <Card className="border-primary/30 bg-primary/5">
         <CardHeader>
@@ -239,6 +301,22 @@ function SettingsTab() {
                 />
                 <p className="text-xs text-muted-foreground">
                   ระบบจะสร้างลิงก์เป็น: base_url&url=encoded_product_url&source=api_product
+                </p>
+              </div>
+
+              {/* URL Cloaking for CSV Mode */}
+              <div className="pt-3 border-t space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Key className="h-4 w-4 text-primary" />
+                  URL Cloaking Token (ตัวเลือก)
+                </Label>
+                <Input
+                  placeholder="กรอก token (ตัวอย่าง: Q1pXZyCqMylKUjZiYchwB)"
+                  value={settings.cloakingToken || ""}
+                  onChange={(e) => update({ cloakingToken: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  URL ที่แสดงผล: <span className="font-mono text-primary">https://goeco.mobi/?token={settings.cloakingToken || "YOUR_TOKEN"}&url=...&source=api_product</span>
                 </p>
               </div>
             </div>

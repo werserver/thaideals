@@ -6,7 +6,7 @@ import { StarRating } from "@/components/StarRating";
 import { ShareButtons } from "@/components/ShareButtons";
 import { FlashSaleCountdown } from "@/components/FlashSaleCountdown";
 import { AiReviews } from "@/components/AiReviews";
-
+// ❌ ลบ AiDescription ตาม Issue #1
 import { FakeCompareTable } from "@/components/FakeCompareTable";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import { Badge } from "@/components/ui/badge";
@@ -231,9 +231,9 @@ export default function ProductDetail() {
               rel="noopener noreferrer"
               className="block"
             >
-              <Button size="lg" className="w-full gap-2 text-base hover-scale">
-                <ExternalLink className="h-5 w-5" />
-                ซื้อสินค้านี้
+              <Button size="lg" className="w-full gap-2 text-base hover-scale shadow-lg shadow-primary/20">
+                <ShoppingCart className="h-5 w-5" />
+                สั่งซื้อสินค้านี้
               </Button>
             </a>
 
@@ -260,26 +260,28 @@ export default function ProductDetail() {
           </div>
         )}
 
-        {/* Product Details Section */}
-        <div className="rounded-xl border bg-card p-6 space-y-4 animate-fade-in">
-          <h2 className="text-lg font-bold">รายละเอียดสินค้า</h2>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+        {/* Product Details Section - ปรับปรุงให้สวยงามขึ้น */}
+        <div className="rounded-xl border bg-card p-6 space-y-4 animate-fade-in shadow-sm">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            ข้อมูลสินค้า
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             {[
               { label: "ชื่อสินค้า", value: displayName },
               { label: "หมวดหมู่", value: product.category_name },
               { label: "ร้านค้า", value: product.shop_id },
-              { label: "สกุลเงิน", value: product.product_currency },
               { label: "ราคาปกติ", value: formatPrice(product.product_price, product.product_currency) },
               ...(hasDiscount
                 ? [
-                    { label: "ราคาลด", value: formatPrice(product.product_discounted, product.product_currency) },
+                    { label: "ราคาพิเศษ", value: formatPrice(product.product_discounted, product.product_currency) },
                     { label: "ส่วนลด", value: `${product.product_discounted_percentage}%` },
                   ]
                 : []),
             ].map((item) => (
-              <div key={item.label} className="space-y-0.5">
+              <div key={item.label} className="flex justify-between border-b pb-2 sm:block sm:border-0 sm:pb-0">
                 <p className="text-muted-foreground text-xs">{item.label}</p>
-                <p className="font-medium text-card-foreground break-all">{item.value}</p>
+                <p className="font-medium text-card-foreground">{item.value}</p>
               </div>
             ))}
           </div>
